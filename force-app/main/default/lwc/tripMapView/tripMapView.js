@@ -30,9 +30,8 @@ export default class TripMapView extends LightningElement {
         }
     };
     
-    // Map options - key changes to match Image 2
     mapOptions = {
-        zoomLevel: 2.5,          // Lower zoom level to see the entire world
+        zoomLevel: 1,          // Lower zoom level to see the entire world
         listView: 'hidden',
         markerTitleField: 'title',
         markerDescriptionField: 'description'

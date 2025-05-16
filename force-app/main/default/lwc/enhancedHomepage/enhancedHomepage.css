@@ -1,0 +1,355 @@
+/* Revised Homepage Styles */
+
+/* Main layout structure */
+.travel-app-homepage {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Hero banner section - Simple blue gradient */
+.hero-banner {
+    background: linear-gradient(135deg, #1a73e8 0%, #6c5ce7 100%);
+    color: white;
+    border-radius: 0.75rem;
+    height: 160px;
+    display: flex;
+    align-items: center;
+    padding: 2rem;
+    margin-bottom: 1rem;
+}
+
+.hero-content {
+    width: 100%;
+}
+
+.hero-content h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+    font-weight: 300;
+}
+
+.quick-actions {
+    margin-top: 1rem;
+}
+
+/* Two-column layout for main content */
+.dashboard-content {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+    .dashboard-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Stats overview styles */
+.stats-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    padding: 0.5rem;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.stat-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a73e8;
+}
+
+/* Map container styling - fixed height and centered */
+.map-container {
+    height: 300px;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+/* Countries grid styling */
+.countries-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem;
+}
+
+.country-badge {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    background-color: #f3f4f6;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.country-badge:hover {
+    background-color: #e6f2ff;
+    transform: translateY(-2px);
+}
+
+.country-flag {
+    font-size: 1.2rem;
+    margin-right: 0.5rem;
+}
+
+.country-name {
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.empty-countries-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem 1rem;
+    color: #6b7280;
+}
+
+/* Timeline component styling */
+.timeline-wrapper {
+    padding: 0.5rem;
+}
+
+.timeline {
+    position: relative;
+    padding: 0;
+    list-style: none;
+    margin: 0;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 16px;
+    width: 3px;
+    background-color: #e5e7eb;
+    z-index: 0;
+}
+
+.timeline > li {
+    position: relative;
+    margin-bottom: 1.5rem;
+    padding-left: 40px;
+}
+
+.timeline > li:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-badge {
+    position: absolute;
+    left: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 32px;
+    background-color: #1a73e8;
+    color: white;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timeline-content {
+    padding: 1rem;
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.timeline-content:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.trip-name {
+    font-weight: 700;
+    font-size: 1.125rem;
+    margin: 0;
+    color: #1a1a1a;
+}
+
+.trip-dates, .trip-location {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+}
+
+.trip-countdown {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.countdown-value {
+    font-weight: 700;
+    color: #1a73e8;
+}
+
+/* Custom badge styling */
+lightning-badge.badge-planned {
+    background-color: #1a73e8;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+lightning-badge.badge-in-progress {
+    background-color: #ffab00;
+    color: #1a1a1a;
+    padding: 0.25rem 0.5rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+lightning-badge.badge-completed {
+    background-color: #34a853;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+/* Progress bar styling */
+.progress-container {
+    margin-top: 0.75rem;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+}
+
+.custom-progress-container {
+    height: 6px;
+    background-color: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.custom-progress-bar {
+    position: relative;
+    height: 100%;
+    width: 100%;
+}
+
+.custom-progress-value {
+    display: block;
+    height: 100%;
+    transition: width 0.3s ease;
+    background-color: #1a73e8;
+}
+
+/* Trip types styling */
+.trip-upcoming .timeline-badge {
+    background-color: #1a73e8;
+}
+
+.trip-in-progress .timeline-badge {
+    background-color: #ffab00;
+}
+
+.trip-completed .timeline-badge {
+    background-color: #34a853;
+}
+
+/* Empty state styling */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 3rem 1rem;
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+}
+
+.empty-state h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 1rem 0 0.5rem;
+}
+
+.empty-state p {
+    color: #6b7280;
+    margin-bottom: 1rem;
+}
+
+/* Timeline footer styling */
+.timeline-footer {
+    margin-top: 0.75rem;
+    border-top: 1px solid #f3f4f6;
+    padding-top: 0.75rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .stats-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .hero-content h1 {
+        font-size: 1.5rem;
+    }
+    
+    .subtitle {
+        font-size: 1rem;
+    }
+    
+    .timeline-content {
+        padding: 0.75rem;
+    }
+}
