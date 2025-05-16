@@ -10,12 +10,12 @@ import getUserTrips from '@salesforce/apex/TripDashboardController.getUserTrips'
 export default class TripDashboard extends NavigationMixin(LightningElement) {
     @track allTrips = [];
     @track filteredTrips = [];
-    @track selectedFilter = 'planned';
+    @track selectedFilter = 'all';
     @track isLoading = true;
     @track error;
     @track showPlanTripModal = false;
     @track tripStats = {};
-    @track activeTab = 'planned'; 
+    @track activeTab = 'planned'; // Default active tab is 'planned'
     
     wiredTripsResult;
     
@@ -27,10 +27,10 @@ export default class TripDashboard extends NavigationMixin(LightningElement) {
     ];
 
     tabs = [
-        { label: 'All Trips', value: 'all', count: 0 },
-        { label: 'Recent', value: 'recent', count: 0 },
         { label: 'Planned', value: 'planned', count: 0 },
-        { label: 'Completed', value: 'completed', count: 0 }
+        { label: 'Recent', value: 'recent', count: 0 },
+        { label: 'Completed', value: 'completed', count: 0 },
+        { label: 'All Trips', value: 'all', count: 0 }
     ];
 
     @wire(getUserTrips)
@@ -62,7 +62,7 @@ export default class TripDashboard extends NavigationMixin(LightningElement) {
     }
 
     renderedCallback() {
-        // Tab styling code remains the same
+        // Apply tab styling - make active tab appear selected
         const tabItems = this.template.querySelectorAll('.slds-tabs_default__item');
         tabItems.forEach(item => {
             const link = item.querySelector('a');
@@ -77,41 +77,36 @@ export default class TripDashboard extends NavigationMixin(LightningElement) {
             }
         });
         
-        // More aggressive approach for progress bars
+        // Update progress bar colors for all trip cards
+        this.updateProgressBarColors();
+    }
+
+    // Apply correct colors to progress bars based on percentage
+    updateProgressBarColors() {
         setTimeout(() => {
-            const progressBars = this.template.querySelectorAll('lightning-progress-bar');
-            progressBars.forEach(bar => {
-                const tripElement = bar.closest('.trip-card');
-                if (tripElement) {
-                    const tripId = tripElement.querySelector('[data-id]').dataset.id;
-                    const trip = this.filteredTrips.find(t => t.Id === tripId);
-                    
-                    if (trip) {
-                        // Direct DOM manipulation - find the actual progress bar value element
-                        // We're using querySelector extensively to get to the actual element
-                        const shadowRoot = bar.shadowRoot;
-                        if (shadowRoot) {
-                            const progressBarValue = shadowRoot.querySelector('.slds-progress-bar__value');
-                            if (progressBarValue) {
-                                // Direct style manipulation
-                                if (trip.budgetPercentage > 90) {
-                                    progressBarValue.style.backgroundColor = '#fe5c4c'; // Red
-                                } else if (trip.budgetPercentage > 70) {
-                                    progressBarValue.style.backgroundColor = '#ffb75d'; // Yellow
-                                } else {
-                                    progressBarValue.style.backgroundColor = '#1589ee'; // Blue
-                                }
-                            }
+            const tripCards = this.template.querySelectorAll('.trip-card');
+            
+            tripCards.forEach(card => {
+                const progressValue = card.querySelector('.custom-progress-value');
+                if (progressValue) {
+                    const cardContent = card.querySelector('[data-id]');
+                    if (cardContent) {
+                        const tripId = cardContent.dataset.id;
+                        const trip = this.filteredTrips.find(t => t.Id === tripId);
+                        
+                        if (trip && progressValue) {
+                            // The style is already set via data binding
+                            // Just ensure proper rendering
                         }
                     }
                 }
             });
-        }, 100); // Small delay to ensure DOM is fully rendered
+        }, 10);
     }
 
     processTripData(trips) {
         this.allTrips = trips.map(trip => {
-            // Format dates
+            // Format dates for display
             const startDate = new Date(trip.Start_Date__c);
             const endDate = new Date(trip.End_Date__c);
             
@@ -119,33 +114,42 @@ export default class TripDashboard extends NavigationMixin(LightningElement) {
             const startDateFormatted = startDate.toLocaleDateString('en-US', options);
             const endDateFormatted = endDate.toLocaleDateString('en-US', options);
             
-            // Calculate budget percentage and determine color
+            // Calculate budget percentage
             const budgetPercentage = this.calculateBudgetPercentage(trip);
-            let progressBarColor = '#1589ee'; // Default blue
             
+            // Determine color based on percentage
+            let progressColor = '#1589ee'; // Default blue
             if (budgetPercentage > 90) {
-                progressBarColor = '#fe5c4c'; // Red
+                progressColor = '#fe5c4c'; // Red for > 90%
             } else if (budgetPercentage > 70) {
-                progressBarColor = '#ffb75d'; // Yellow
+                progressColor = '#ffb75d'; // Yellow for > 70%
             }
             
+            // Create style for progress bar
+            const progressStyle = `display: block; height: 100%; width: ${budgetPercentage}%; background-color: ${progressColor};`;
+            
+            // Add computed properties to the trip object
             return {
                 ...trip,
                 isInProgress: this.isTripInProgress(trip),
                 isCompleted: this.isTripCompleted(trip),
                 isPlanned: this.isTripPlanned(trip),
                 budgetPercentage: budgetPercentage,
-                progressBarColor: progressBarColor, // Added color property
+                progressStyle: progressStyle,
                 formattedCurrency: trip.Budget__c,
                 startDateFormatted: startDateFormatted,
                 endDateFormatted: endDateFormatted
             };
         });
         
+        // Update tab counts
         this.updateTabCounts();
+        
+        // Apply initial filter
         this.applyFilter();
     }
 
+    // Determine trip status based on dates
     isTripInProgress(trip) {
         const today = new Date();
         const startDate = new Date(trip.Start_Date__c);
@@ -167,22 +171,26 @@ export default class TripDashboard extends NavigationMixin(LightningElement) {
 
     calculateBudgetPercentage(trip) {
         if (!trip.Budget__c || trip.Budget__c === 0) return 0;
-        return ((trip.Total_Spent__c || 0) / trip.Budget__c) * 100;
+        const percentage = ((trip.Total_Spent__c || 0) / trip.Budget__c) * 100;
+        return Math.min(Math.max(percentage, 0), 100); // Clamp between 0-100%
     }
 
+    // Count trips by category and update tab counts
     updateTabCounts() {
-        const recent = this.getRecentTrips(this.allTrips).length;
         const planned = this.allTrips.filter(t => t.isPlanned).length;
+        const recent = this.getRecentTrips(this.allTrips).length;
         const completed = this.allTrips.filter(t => t.isCompleted).length;
+        const all = this.allTrips.length;
         
         this.tabs = [
             { label: 'Planned', value: 'planned', count: planned },
             { label: 'Recent', value: 'recent', count: recent },
             { label: 'Completed', value: 'completed', count: completed },
-            { label: 'All Trips', value: 'all', count: this.allTrips.length }
+            { label: 'All Trips', value: 'all', count: all }
         ];
     }
 
+    // Get trips from the last 3 months
     getRecentTrips(trips) {
         const threeMonthsAgo = new Date();
         threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
@@ -193,6 +201,7 @@ export default class TripDashboard extends NavigationMixin(LightningElement) {
         });
     }
 
+    // Handle tab click - apply filtering by tab
     handleTabChange(event) {
         this.activeTab = event.currentTarget.dataset.value;
         this.applyFilter();
@@ -200,33 +209,35 @@ export default class TripDashboard extends NavigationMixin(LightningElement) {
         // Update UI after tab change
         setTimeout(() => {
             this.renderedCallback();
-        }, 0);
+        }, 10);
     }
 
+    // Handle secondary filter dropdown changes
     handleFilterChange(event) {
         this.selectedFilter = event.detail.value;
         this.applyFilter();
     }
 
+    // Apply both tab and dropdown filters
     applyFilter() {
+        // Start with all trips
         let filtered = [...this.allTrips];
         
-        // Apply tab filter
+        // Apply tab filter first
         switch(this.activeTab) {
             case 'recent':
                 filtered = this.getRecentTrips(filtered);
                 break;
-            case 'all':
+            case 'planned':
+                filtered = filtered.filter(t => t.isPlanned);
                 break;
             case 'completed':
                 filtered = filtered.filter(t => t.isCompleted);
                 break;
-            default:
-                filtered = filtered.filter(t => t.isPlanned);
-                break;
+            // 'all' tab shows everything, so no filtering needed
         }
         
-        // Apply status filter
+        // Then apply secondary filter dropdown if it's not 'all'
         if (this.selectedFilter !== 'all') {
             switch(this.selectedFilter) {
                 case 'planned':
@@ -241,16 +252,18 @@ export default class TripDashboard extends NavigationMixin(LightningElement) {
             }
         }
         
+        // Update filtered trips
         this.filteredTrips = filtered;
         
         // Update UI after filter change
         if (!this.isLoading) {
             setTimeout(() => {
-                this.renderedCallback();
-            }, 0);
+                this.updateProgressBarColors();
+            }, 10);
         }
     }
 
+    // Modal and navigation handlers
     handlePlanNewTrip() {
         this.showPlanTripModal = true;
     }
@@ -273,7 +286,7 @@ export default class TripDashboard extends NavigationMixin(LightningElement) {
     }
 
     handleViewMap(event) {
-        event.stopPropagation();
+        event.stopPropagation(); // Prevent trip card click
         const tripId = event.currentTarget.dataset.id;
         this[NavigationMixin.Navigate]({
             type: 'standard__recordPage',
@@ -289,7 +302,7 @@ export default class TripDashboard extends NavigationMixin(LightningElement) {
     }
 
     handleViewExpenses(event) {
-        event.stopPropagation();
+        event.stopPropagation(); // Prevent trip card click
         const tripId = event.currentTarget.dataset.id;
         this[NavigationMixin.Navigate]({
             type: 'standard__recordPage',
@@ -304,10 +317,16 @@ export default class TripDashboard extends NavigationMixin(LightningElement) {
         });
     }
 
+    // Refresh data from server
     refreshData() {
-        return refreshApex(this.wiredTripsResult);
+        this.isLoading = true;
+        return refreshApex(this.wiredTripsResult)
+            .finally(() => {
+                this.isLoading = false;
+            });
     }
 
+    // Toast notification utility
     showToast(title, message, variant) {
         const event = new ShowToastEvent({
             title: title,
@@ -317,6 +336,7 @@ export default class TripDashboard extends NavigationMixin(LightningElement) {
         this.dispatchEvent(event);
     }
 
+    // Getters for stats and UI state
     get hasTripStats() {
         return Object.keys(this.tripStats).length > 0;
     }
@@ -342,19 +362,6 @@ export default class TripDashboard extends NavigationMixin(LightningElement) {
     }
 
     get progressBarStyle() {
-    return `height: 8px; width: 100%; background-color: #e0e5ee; border-radius: 4px; overflow: hidden;`;
-}
-
-    get progressBarValueStyle() {
-        const progress = this.budgetProgress;
-        let color = 'rgb(21, 137, 238)'; // Blue for < 70%
-        
-        if (progress > 90) {
-            color = 'rgb(254, 92, 76)'; // Red
-        } else if (progress > 70) {
-            color = 'rgb(255, 183, 93)'; // Yellow
-        }
-        
-        return `display: block; height: 100%; width: ${progress}%; background-color: ${color};`;
+        return `height: 8px; width: 100%; background-color: #e0e5ee; border-radius: 4px; overflow: hidden;`;
     }
 }
