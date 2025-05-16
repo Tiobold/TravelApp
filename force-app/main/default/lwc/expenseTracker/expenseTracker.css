@@ -64,3 +64,21 @@ lightning-progress-bar[variant="danger"] .slds-progress-bar__value {
 .custom-progress-value {
     transition: width 0.3s ease, background-color 0.3s ease;
 }
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .slds-modal__container {
+        width: 95%;
+        max-width: none;
+    }
+    
+    /* Stack budget stats vertically on mobile */
+    .slds-medium-size_1-of-3 {
+        width: 100%;
+        border-bottom: 1px solid #f1f1f1;
+        padding: 0.75rem 0;
+    }
+    
+    .slds-medium-size_1-of-3:last-child {
+        border-bottom: none;
+    }
+}

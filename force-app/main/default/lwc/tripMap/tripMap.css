@@ -290,3 +290,54 @@ lightning-progress-bar[variant="danger"] .slds-progress-bar__value {
 .custom-progress-value {
     transition: width 0.3s ease, background-color 0.3s ease;
 }
+/* Mobile-first base styles */
+.map-container {
+    height: 300px;
+    width: 100%;
+}
+
+/* Responsive adjustments for map controls */
+.zoom-controls {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    z-index: 10;
+}
+
+/* Adjust itinerary container for mobile */
+.itinerary-container {
+    max-height: 400px !important;
+    overflow-y: auto;
+}
+
+/* Responsive media queries */
+@media (max-width: 768px) {
+    .map-container {
+        height: 250px;
+    }
+    
+    .main-layout lightning-layout-item {
+        padding: 0.25rem;
+    }
+    
+    .trip-details-horizontal {
+        flex-direction: column;
+    }
+    
+    .trip-detail-item {
+        border-right: none;
+        border-bottom: 1px solid #e5e5e5;
+        padding: 0.5rem 0;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+    .map-container {
+        height: 200px;
+    }
+    
+    .activity-item {
+        padding: 0.5rem 0.25rem;
+    }
+}
