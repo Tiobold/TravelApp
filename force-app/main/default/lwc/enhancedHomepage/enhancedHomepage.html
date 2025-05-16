@@ -4,7 +4,7 @@
         <!-- Hero Banner with Personalized Welcome -->
         <div class="hero-banner">
             <div class="hero-content">
-                <h1>Welcome back, Traveler!</h1>
+                <h1>Welcome back, Claudio!</h1>
                 <p class="subtitle">Your next adventure awaits</p>
                 
                 <!-- Quick Actions Card - Removed Import from Google -->
@@ -71,53 +71,7 @@
                         <c-trip-map-view></c-trip-map-view>
                     </div>
                 </lightning-card>
-                
-                <!-- Expense Overview Card -->
-                <lightning-card title="Expense Overview" icon-name="utility:money">
-                    <div class="expense-overview">
-                        <div class="expense-summary">
-                            <div class="summary-item">
-                                <div class="summary-label">This Month</div>
-                                <div class="summary-value">
-                                    <lightning-formatted-number 
-                                        value={currentMonthExpenses} 
-                                        format-style="currency"
-                                        currency-code="EUR">
-                                    </lightning-formatted-number>
-                                </div>
-                            </div>
-                            <div class="summary-item">
-                                <div class="summary-label">Last Month</div>
-                                <div class="summary-value">
-                                    <lightning-formatted-number 
-                                        value={lastMonthExpenses} 
-                                        format-style="currency"
-                                        currency-code="EUR">
-                                    </lightning-formatted-number>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="expense-categories">
-                            <h3 class="categories-heading">Top Categories</h3>
-                            <template for:each={topExpenseCategories} for:item="category">
-                                <div key={category.id} class="category-item">
-                                    <div class="category-name">{category.name}</div>
-                                    <div class="category-bar">
-                                        <div class="category-progress" style={category.style}></div>
-                                    </div>
-                                    <div class="category-amount">
-                                        <lightning-formatted-number 
-                                            value={category.amount} 
-                                            format-style="currency"
-                                            currency-code="EUR">
-                                        </lightning-formatted-number>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                </lightning-card>
+            
             </div>
             
             <!-- Right Column -->

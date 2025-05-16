@@ -1,0 +1,64 @@
+<template>
+    <lightning-card title="Expense Overview" icon-name="utility:money">
+        <!-- Loading Spinner -->
+        <template if:true={isLoading}>
+            <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+        </template>
+
+        <!-- Error Display -->
+        <template if:true={error}>
+            <div class="slds-text-color_error slds-p-around_small">
+                Error loading expense data. Please try again later.
+            </div>
+        </template>
+
+        <div class="expense-overview">
+            <!-- Monthly Expense Summary -->
+            <div class="expense-summary">
+                <div class="summary-item">
+                    <div class="summary-label">This Month</div>
+                    <div class="summary-value">
+                        <lightning-formatted-number 
+                            value={currentMonthExpenses} 
+                            format-style="currency"
+                            currency-code="EUR">
+                        </lightning-formatted-number>
+                    </div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Last Month</div>
+                    <div class="summary-value">
+                        <lightning-formatted-number 
+                            value={lastMonthExpenses} 
+                            format-style="currency"
+                            currency-code="EUR">
+                        </lightning-formatted-number>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Expense Categories -->
+            <div class="expense-categories">
+                <h3 class="categories-heading">Top Categories</h3>
+                <template for:each={topExpenseCategories} for:item="category">
+                    <div key={category.id} class="category-item">
+                        <div class="category-name">
+                            <span>{category.name}</span>
+                            <span>{category.percentage}%</span>
+                        </div>
+                        <div class="category-bar">
+                            <div class="category-progress" style={category.style}></div>
+                        </div>
+                        <div class="category-amount">
+                            <lightning-formatted-number 
+                                value={category.amount} 
+                                format-style="currency"
+                                currency-code="EUR">
+                            </lightning-formatted-number>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </lightning-card>
+</template>

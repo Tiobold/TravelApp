@@ -1,13 +1,12 @@
 /* tripMap.css - Adding new styles for itinerary display */
 
-/* Existing styles from your CSS file */
 .slds-card {
     border-radius: var(--lwc-borderRadiusLarge, 0.5rem);
 }
 
 .map-container {
     position: relative;
-    height: 500px;
+    height: 800px;
     width: 100%;
 }
 
@@ -339,5 +338,180 @@ lightning-progress-bar[variant="danger"] .slds-progress-bar__value {
     
     .activity-item {
         padding: 0.5rem 0.25rem;
+    }
+}
+.modal-content {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* Add Item Modal Styles */
+.add-item-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.form-field {
+    flex: 1;
+    min-width: 200px;
+}
+
+.location-search-container {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.location-search {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #d8dde6;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #d8dde6;
+    border-radius: 0 0 0.25rem 0.25rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.search-result-item {
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.search-result-item:hover {
+    background-color: #f3f3f3;
+}
+
+.search-result-label {
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.search-result-address {
+    font-size: 0.75rem;
+    color: #706e6b;
+}
+/* Enhanced Add Item Modal Styles */
+.modal-two-column {
+    min-height: 400px;
+}
+
+/* Left Column - Location Selection */
+.location-selection-container {
+    border-right: 1px solid #e1e1e1;
+    padding-right: 1rem;
+    height: 100%;
+}
+
+.search-with-button {
+    position: relative;
+    display: flex;
+}
+
+.location-search {
+    flex: 1;
+}
+
+.search-button {
+    margin-left: 0.5rem;
+}
+
+.search-results-container {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #e1e1e1;
+    border-radius: 0.25rem;
+}
+
+.search-result-item {
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.search-result-item:hover {
+    background-color: #f3f3f3;
+}
+
+.search-result-label {
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.search-result-address {
+    font-size: 0.75rem;
+    color: #706e6b;
+}
+
+.location-icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.location-icon {
+    --sds-c-icon-color-foreground-default: #0070d2;
+}
+
+/* Selected Location Card */
+.selected-location-card {
+    border: 1px solid #e1e1e1;
+    border-radius: 0.25rem;
+    margin-bottom: 1rem;
+}
+
+.map-preview-container {
+    height: 200px;
+    width: 100%;
+}
+
+/* Right Column - Item Details */
+.item-details-container {
+    padding-left: 1rem;
+    height: 100%;
+}
+
+.form-disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+    .modal-two-column {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .location-selection-container {
+        border-right: none;
+        border-bottom: 1px solid #e1e1e1;
+        padding-right: 0;
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .item-details-container {
+        padding-left: 0;
+        padding-top: 1rem;
     }
 }

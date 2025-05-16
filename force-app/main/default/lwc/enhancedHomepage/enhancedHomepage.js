@@ -6,13 +6,12 @@ import { refreshApex } from '@salesforce/apex';
 import getUserTrips from '@salesforce/apex/TripDashboardController.getUserTrips';
 import getTripStats from '@salesforce/apex/TripDashboardController.getTripStats';
 import getVisitedCountries from '@salesforce/apex/TripDashboardController.getVisitedCountries';
-// Uncomment when implemented
-// import getExpenseBreakdown from '@salesforce/apex/TripDashboardController.getExpenseBreakdown';
+import getExpenseBreakdown from '@salesforce/apex/TripDashboardController.getExpenseBreakdown';
 
 export default class EnhancedHomepage extends NavigationMixin(LightningElement) {
     @track trips = [];
     @track filteredTrips = [];
-    @track currentFilter = 'all';
+    @track currentFilter = 'upcoming';
     @track isLoading = true;
     @track error;
     @track showPlanTripModal = false;
