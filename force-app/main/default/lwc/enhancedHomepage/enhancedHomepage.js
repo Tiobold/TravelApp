@@ -1,4 +1,4 @@
-// revisedHomepage.js
+// enhancedHomepage.js
 import { LightningElement, track, wire } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
@@ -6,15 +6,24 @@ import { refreshApex } from '@salesforce/apex';
 import getUserTrips from '@salesforce/apex/TripDashboardController.getUserTrips';
 import getTripStats from '@salesforce/apex/TripDashboardController.getTripStats';
 import getVisitedCountries from '@salesforce/apex/TripDashboardController.getVisitedCountries';
+// Uncomment when implemented
+// import getExpenseBreakdown from '@salesforce/apex/TripDashboardController.getExpenseBreakdown';
 
-export default class RevisedHomepage extends NavigationMixin(LightningElement) {
+export default class EnhancedHomepage extends NavigationMixin(LightningElement) {
     @track trips = [];
-    @track upcomingTrips = [];
+    @track filteredTrips = [];
+    @track currentFilter = 'all';
     @track isLoading = true;
     @track error;
     @track showPlanTripModal = false;
     @track tripStats = {};
     @track countries = [];
+    @track hasFilterApplied = false;
+    
+    // Expense overview data
+    @track currentMonthExpenses = 0;
+    @track lastMonthExpenses = 0;
+    @track topExpenseCategories = [];
     
     countriesVisited = 0;
     
@@ -29,7 +38,7 @@ export default class RevisedHomepage extends NavigationMixin(LightningElement) {
         } else if (result.error) {
             this.error = result.error;
             this.trips = [];
-            this.upcomingTrips = [];
+            this.filteredTrips = [];
             this.showToast('Error', 'Error loading trips', 'error');
         }
         this.isLoading = false;
@@ -47,22 +56,34 @@ export default class RevisedHomepage extends NavigationMixin(LightningElement) {
     @wire(getVisitedCountries)
     wiredCountries({ error, data }) {
         if (data) {
-            // Process countries and add flag emojis
-            this.countries = data.map(country => {
-                return {
-                    ...country,
-                    flagEmoji: this.getFlagEmoji(country.countryCode)
-                };
-            });
+            this.countries = data;
             this.countriesVisited = data.length;
         } else if (error) {
             this.showToast('Error', 'Error loading country data', 'error');
         }
     }
+    
+    // Uncomment when Apex method is implemented
+    /*
+    @wire(getExpenseBreakdown)
+    wiredExpenses({ error, data }) {
+        if (data) {
+            this.processExpenseData(data);
+        } else if (error) {
+            console.error('Error loading expense data:', error);
+            // Load sample data if API call fails
+            this.loadSampleExpenseData();
+        }
+    }
+    */
+    
+    connectedCallback() {
+        // Load sample expense data
+        this.loadSampleExpenseData();
+    }
 
     processTrips(tripsData) {
         const today = new Date();
-        const upcomingTrips = [];
         
         this.trips = tripsData.map(trip => {
             // Format dates
@@ -126,7 +147,7 @@ export default class RevisedHomepage extends NavigationMixin(LightningElement) {
             // Create style for progress bar
             const progressStyle = `width: ${budgetPercentage}%; background-color: ${progressColor};`;
             
-            const enhancedTrip = {
+            return {
                 ...trip,
                 isUpcoming,
                 isInProgress,
@@ -143,21 +164,10 @@ export default class RevisedHomepage extends NavigationMixin(LightningElement) {
                 formattedBudget,
                 formattedSpent
             };
-            
-            // Add to upcoming trips list if it's not completed
-            if (isUpcoming || isInProgress) {
-                upcomingTrips.push(enhancedTrip);
-            }
-            
-            return enhancedTrip;
         });
         
-        // Sort upcoming trips by start date
-        upcomingTrips.sort((a, b) => {
-            return new Date(a.Start_Date__c) - new Date(b.Start_Date__c);
-        });
-        
-        this.upcomingTrips = upcomingTrips;
+        // Apply initial filter
+        this.applyFilter(this.currentFilter);
     }
     
     calculateBudgetPercentage(trip) {
@@ -166,22 +176,136 @@ export default class RevisedHomepage extends NavigationMixin(LightningElement) {
         return Math.min(Math.max(percentage, 0), 100); // Clamp between 0-100%
     }
     
-    // Get flag emoji from country code
-    getFlagEmoji(countryCode) {
-        if (!countryCode || countryCode === 'XX' || countryCode.length !== 2) {
-            return '🌍'; // Default globe for unknown countries
+    // Process expense data from API
+    processExpenseData(data) {
+        if (data.currentMonth) {
+            this.currentMonthExpenses = data.currentMonth;
         }
         
-        try {
-            const codePoints = countryCode
-                .toUpperCase()
-                .split('')
-                .map(char => 127397 + char.charCodeAt(0));
-            return String.fromCodePoint(...codePoints);
-        } catch (e) {
-            console.warn(`Could not create flag emoji for ${countryCode}`, e);
-            return '🌍'; // Fallback
+        if (data.lastMonth) {
+            this.lastMonthExpenses = data.lastMonth;
         }
+        
+        if (data.categories && data.categories.length > 0) {
+            this.topExpenseCategories = data.categories.map(cat => {
+                // Calculate percentage for width
+                const percentage = cat.percentage || (cat.amount / data.total * 100);
+                return {
+                    ...cat,
+                    style: `width: ${percentage}%; background-color: ${this.getCategoryColor(cat.name)};`
+                };
+            });
+        }
+    }
+    
+    // Load sample expense data for demonstration
+    loadSampleExpenseData() {
+        this.currentMonthExpenses = 587.50;
+        this.lastMonthExpenses = 943.25;
+        
+        this.topExpenseCategories = [
+            {
+                id: 'cat1',
+                name: 'Accommodation',
+                amount: 620.00,
+                percentage: 40.5,
+                style: 'width: 40.5%; background-color: #1a73e8;'
+            },
+            {
+                id: 'cat2',
+                name: 'Food',
+                amount: 350.50,
+                percentage: 22.9,
+                style: 'width: 22.9%; background-color: #34a853;'
+            },
+            {
+                id: 'cat3',
+                name: 'Transportation',
+                amount: 285.25,
+                percentage: 18.6,
+                style: 'width: 18.6%; background-color: #fbbc04;'
+            },
+            {
+                id: 'cat4',
+                name: 'Activities',
+                amount: 215.00,
+                percentage: 14.0,
+                style: 'width: 14.0%; background-color: #ea4335;'
+            },
+            {
+                id: 'cat5',
+                name: 'Shopping',
+                amount: 60.00,
+                percentage: 3.9,
+                style: 'width: 3.9%; background-color: #9334e6;'
+            }
+        ];
+    }
+    
+    // Get color for expense category
+    getCategoryColor(category) {
+        const colorMap = {
+            'Accommodation': '#1a73e8',
+            'Food': '#34a853',
+            'Transportation': '#fbbc04',
+            'Activities': '#ea4335',
+            'Shopping': '#9334e6',
+            'Other': '#5f6368'
+        };
+        
+        return colorMap[category] || '#5f6368';
+    }
+    
+    // Apply filter to trips
+    applyFilter(filterValue) {
+        this.currentFilter = filterValue;
+        this.hasFilterApplied = filterValue !== 'all';
+        
+        let filtered;
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        
+        switch(filterValue) {
+            case 'upcoming':
+                filtered = this.trips.filter(trip => trip.isUpcoming);
+                break;
+            case 'inprogress':
+                filtered = this.trips.filter(trip => trip.isInProgress);
+                break;
+            case 'completed':
+                filtered = this.trips.filter(trip => trip.isCompleted);
+                break;
+            case 'year':
+                filtered = this.trips.filter(trip => {
+                    const tripYear = new Date(trip.Start_Date__c).getFullYear();
+                    return tripYear === currentYear;
+                });
+                break;
+            default:
+                // 'all' or any other value
+                filtered = [...this.trips];
+                this.hasFilterApplied = false;
+        }
+        
+        // Sort by start date (upcoming first, then in progress, then completed)
+        filtered.sort((a, b) => {
+            // First group by status
+            if (a.isUpcoming && !b.isUpcoming) return -1;
+            if (!a.isUpcoming && b.isUpcoming) return 1;
+            if (a.isInProgress && !b.isInProgress && !b.isUpcoming) return -1;
+            if (!a.isInProgress && b.isInProgress && !a.isUpcoming) return 1;
+            
+            // Then by date within each status group
+            return new Date(a.Start_Date__c) - new Date(b.Start_Date__c);
+        });
+        
+        this.filteredTrips = filtered;
+    }
+    
+    // Handler for timeline filter change
+    handleTimelineFilterChange(event) {
+        const filterValue = event.detail.value;
+        this.applyFilter(filterValue);
     }
     
     // Event Handlers
@@ -195,47 +319,16 @@ export default class RevisedHomepage extends NavigationMixin(LightningElement) {
     }
     
     handleViewTrip(event) {
-        const tripId = event.currentTarget.dataset.id;
-        this[NavigationMixin.Navigate]({
-            type: 'standard__recordPage',
-            attributes: {
-                recordId: tripId,
-                objectApiName: 'Trip__c',
-                actionName: 'view'
-            }
-        });
-    }
-
-    handleViewMap(event) {
-        event.stopPropagation(); // Prevent trip card click
-        const tripId = event.currentTarget.dataset.id;
-        this[NavigationMixin.Navigate]({
-            type: 'standard__recordPage',
-            attributes: {
-                recordId: tripId,
-                objectApiName: 'Trip__c',
-                actionName: 'view'
-            },
-            state: {
-                tab: 'map'
-            }
-        });
-    }
-
-    handleViewExpenses(event) {
-        event.stopPropagation(); // Prevent trip card click
+        event.stopPropagation();
         const tripId = event.currentTarget.dataset.id;
         
-        // Navigate to trip record page with focus on expenses
+        // Navigate to trip record page
         this[NavigationMixin.Navigate]({
             type: 'standard__recordPage',
             attributes: {
                 recordId: tripId,
                 objectApiName: 'Trip__c',
                 actionName: 'view'
-            },
-            state: {
-                tab: 'expenses'
             }
         });
     }
@@ -258,12 +351,8 @@ export default class RevisedHomepage extends NavigationMixin(LightningElement) {
     }
     
     // Getters
-    get hasUpcomingTrips() {
-        return this.upcomingTrips && this.upcomingTrips.length > 0;
-    }
-    
-    get hasVisitedCountries() {
-        return this.countries && this.countries.length > 0;
+    get hasTripsToShow() {
+        return this.filteredTrips && this.filteredTrips.length > 0;
     }
     
     get totalBudget() {

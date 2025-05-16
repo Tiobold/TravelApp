@@ -1,4 +1,4 @@
-<!-- Revised Travel App Homepage -->
+<!-- enhancedHomepage.html -->
 <template>
     <div class="travel-app-homepage">
         <!-- Hero Banner with Personalized Welcome -->
@@ -72,6 +72,52 @@
                     </div>
                 </lightning-card>
                 
+                <!-- Expense Overview Card -->
+                <lightning-card title="Expense Overview" icon-name="utility:money">
+                    <div class="expense-overview">
+                        <div class="expense-summary">
+                            <div class="summary-item">
+                                <div class="summary-label">This Month</div>
+                                <div class="summary-value">
+                                    <lightning-formatted-number 
+                                        value={currentMonthExpenses} 
+                                        format-style="currency"
+                                        currency-code="EUR">
+                                    </lightning-formatted-number>
+                                </div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-label">Last Month</div>
+                                <div class="summary-value">
+                                    <lightning-formatted-number 
+                                        value={lastMonthExpenses} 
+                                        format-style="currency"
+                                        currency-code="EUR">
+                                    </lightning-formatted-number>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="expense-categories">
+                            <h3 class="categories-heading">Top Categories</h3>
+                            <template for:each={topExpenseCategories} for:item="category">
+                                <div key={category.id} class="category-item">
+                                    <div class="category-name">{category.name}</div>
+                                    <div class="category-bar">
+                                        <div class="category-progress" style={category.style}></div>
+                                    </div>
+                                    <div class="category-amount">
+                                        <lightning-formatted-number 
+                                            value={category.amount} 
+                                            format-style="currency"
+                                            currency-code="EUR">
+                                        </lightning-formatted-number>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </lightning-card>
             </div>
             
             <!-- Right Column -->
@@ -79,18 +125,24 @@
                 <!-- Upcoming Trips Timeline -->
                 <lightning-card title="Your Travel Timeline" icon-name="utility:timeline">
                     <div slot="actions">
-                        <lightning-button-menu alternative-text="Show menu">
-                            <lightning-menu-item value="all" label="View All Trips"></lightning-menu-item>
+                        <lightning-button-menu 
+                            alternative-text="Show menu" 
+                            onselect={handleTimelineFilterChange}
+                            menu-alignment="right">
+                            <lightning-menu-item value="all" label="All Trips"></lightning-menu-item>
+                            <lightning-menu-item value="upcoming" label="Upcoming Trips"></lightning-menu-item>
+                            <lightning-menu-item value="inprogress" label="In Progress"></lightning-menu-item>
+                            <lightning-menu-item value="completed" label="Completed"></lightning-menu-item>
+                            <lightning-menu-divider></lightning-menu-divider>
                             <lightning-menu-item value="year" label="This Year Only"></lightning-menu-item>
-                            <lightning-menu-item value="custom" label="Custom Range..."></lightning-menu-item>
                         </lightning-button-menu>
                     </div>
                     
                     <!-- Timeline Component -->
                     <div class="timeline-wrapper">
-                        <template if:true={hasUpcomingTrips}>
+                        <template if:true={hasTripsToShow}>
                             <ul class="timeline">
-                                <template for:each={upcomingTrips} for:item="trip">
+                                <template for:each={filteredTrips} for:item="trip">
                                     <li key={trip.Id} class={trip.timelineClass}>
                                         <div class="timeline-badge" style={trip.badgeStyle}>
                                             <lightning-icon icon-name="utility:travel_and_places" size="small" variant="inverse"></lightning-icon>
@@ -127,22 +179,12 @@
                                                 </div>
                                             </div>
                                             <div class="timeline-footer">
-                                                <lightning-button-group>
-                                                    <lightning-button 
-                                                        label="View Map" 
-                                                        icon-name="utility:location"
-                                                        data-id={trip.Id}
-                                                        variant="base"
-                                                        onclick={handleViewMap}>
-                                                    </lightning-button>
-                                                    <lightning-button 
-                                                        label="View Expenses" 
-                                                        icon-name="utility:money"
-                                                        data-id={trip.Id}
-                                                        variant="base"
-                                                        onclick={handleViewExpenses}>
-                                                    </lightning-button>
-                                                </lightning-button-group>
+                                                <lightning-button
+                                                    label="View Trip" 
+                                                    data-id={trip.Id}
+                                                    variant="brand-outline"
+                                                    onclick={handleViewTrip}>
+                                                </lightning-button>
                                             </div>
                                         </div>
                                     </li>
@@ -151,11 +193,16 @@
                         </template>
                         
                         <!-- No Trips State -->
-                        <template if:false={hasUpcomingTrips}>
+                        <template if:false={hasTripsToShow}>
                             <div class="empty-state">
                                 <lightning-icon icon-name="utility:travel_and_places" size="large"></lightning-icon>
-                                <h3>No upcoming trips</h3>
-                                <p>Time to plan your next adventure!</p>
+                                <h3>No trips found</h3>
+                                <p>
+                                    <template if:true={hasFilterApplied}>
+                                        Try changing your filter or
+                                    </template>
+                                    plan your next adventure!
+                                </p>
                                 <lightning-button 
                                     label="Plan New Trip" 
                                     variant="brand" 
@@ -167,8 +214,6 @@
                         </template>
                     </div>
                 </lightning-card>
-                
-                <!-- Travel Inspiration section removed -->
             </div>
         </div>
         

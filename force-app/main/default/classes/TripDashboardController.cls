@@ -125,4 +125,118 @@ public with sharing class TripDashboardController {
             this.countryCode = code;
         }
     }
+    /**
+ * Get expense breakdown data for dashboard
+ * @return Map with expense summary data
+ */
+@AuraEnabled(cacheable=true)
+public static Map<String, Object> getExpenseBreakdown() {
+    Map<String, Object> result = new Map<String, Object>();
+    
+    try {
+        // Get current month expenses
+        Decimal currentMonthExpenses = getCurrentMonthExpenses();
+        result.put('currentMonth', currentMonthExpenses);
+        
+        // Get last month expenses
+        Decimal lastMonthExpenses = getLastMonthExpenses();
+        result.put('lastMonth', lastMonthExpenses);
+        
+        // Calculate total for all expenses
+        Decimal totalExpenses = currentMonthExpenses + lastMonthExpenses;
+        result.put('total', totalExpenses);
+        
+        // Get expense categories breakdown
+        List<Map<String, Object>> categories = getExpenseCategories();
+        result.put('categories', categories);
+        
+        return result;
+    } catch (Exception e) {
+        throw new AuraHandledException('Error retrieving expense data: ' + e.getMessage());
+    }
+}
+
+/**
+ * Helper method to get current month's expenses
+ * @return Decimal amount of expenses for current month
+ */
+private static Decimal getCurrentMonthExpenses() {
+    // Get the current month's start and end dates
+    Date today = Date.today();
+    Date firstDayOfMonth = Date.newInstance(today.year(), today.month(), 1);
+    Date lastDayOfMonth = firstDayOfMonth.addMonths(1).addDays(-1);
+    
+    // Query sum of expenses for current month
+    AggregateResult result = [
+        SELECT SUM(Amount__c) total
+        FROM Expense__c
+        WHERE Date__c >= :firstDayOfMonth AND Date__c <= :lastDayOfMonth
+    ];
+    
+    return (result.get('total') != null) ? (Decimal)result.get('total') : 0;
+}
+
+    /**
+     * Helper method to get last month's expenses
+     * @return Decimal amount of expenses for last month
+     */
+    private static Decimal getLastMonthExpenses() {
+        // Get last month's start and end dates
+        Date today = Date.today();
+        Date firstDayOfLastMonth = Date.newInstance(today.year(), today.month(), 1).addMonths(-1);
+        Date lastDayOfLastMonth = Date.newInstance(today.year(), today.month(), 1).addDays(-1);
+        
+        // Query sum of expenses for last month
+        AggregateResult result = [
+            SELECT SUM(Amount__c) total
+            FROM Expense__c
+            WHERE Date__c >= :firstDayOfLastMonth AND Date__c <= :lastDayOfLastMonth
+        ];
+        
+        return (result.get('total') != null) ? (Decimal)result.get('total') : 0;
+    }
+
+    /**
+     * Helper method to get expense categories with amounts and percentages
+     * @return List of maps with category data
+     */
+    private static List<Map<String, Object>> getExpenseCategories() {
+        List<Map<String, Object>> categories = new List<Map<String, Object>>();
+        
+        // Get expenses by category
+        List<AggregateResult> results = [
+            SELECT Category__c, SUM(Amount__c) total
+            FROM Expense__c
+            GROUP BY Category__c
+            ORDER BY SUM(Amount__c) DESC
+            LIMIT 5
+        ];
+        
+        // Calculate total expenses for percentage calculation
+        Decimal totalAmount = 0;
+        for (AggregateResult ar : results) {
+            totalAmount += (Decimal)ar.get('total');
+        }
+        
+        // Create category data objects
+        if (totalAmount > 0) {
+            for (Integer i = 0; i < results.size(); i++) {
+                AggregateResult ar = results[i];
+                String categoryName = (String)ar.get('Category__c');
+                Decimal amount = (Decimal)ar.get('total');
+                Decimal percentage = (amount / totalAmount * 100).setScale(1);
+                
+                Map<String, Object> category = new Map<String, Object>{
+                    'id' => 'cat' + i,
+                    'name' => categoryName != null ? categoryName : 'Other',
+                    'amount' => amount,
+                    'percentage' => percentage
+                };
+                
+                categories.add(category);
+            }
+        }
+        
+        return categories;
+    }
 }
