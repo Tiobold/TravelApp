@@ -1,4 +1,43 @@
-.companion-container {
+/* Current User card styling */
+.current-user-card {
+    border-left: 3px solid #1589ee;
+    background-color: #f0f8ff;
+}
+
+.current-user-card:hover {
+    background-color: #e8f4ff;
+}
+
+.companion-status.owner {
+    color: #1589ee;
+    display: flex;
+    align-items: center;
+}
+
+.companion-status.owner::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #1589ee;
+    margin-right: 4px;
+}
+
+.owner-badge {
+    background-color: #1589ee;
+    font-size: 0.65rem;
+    font-weight: 600;
+}
+
+/* Profile status class for owner */
+.profile-status.owner {
+    color: #1589ee;
+}
+
+.profile-status.owner .status-indicator {
+    background-color: #1589ee;
+}.companion-container {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -16,9 +55,27 @@
 }
 
 .companion-card:hover {
-    background-color: #e0f4ff;
     transform: translateY(-2px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Confirmed companion styling */
+.confirmed-card {
+    border-left: 3px solid #4caf50;
+}
+
+.confirmed-card:hover {
+    background-color: #e0f4ff;
+}
+
+/* Invited companion styling */
+.invited-card {
+    border-left: 3px solid #ffb74d;
+    background-color: #fffaf2;
+}
+
+.invited-card:hover {
+    background-color: #fff4e0;
 }
 
 .companion-photo-container {
@@ -51,6 +108,10 @@
     border: 2px solid white;
 }
 
+.invited-badge {
+    background-color: #ffb74d;
+}
+
 .companion-details {
     flex: 1;
 }
@@ -65,17 +126,892 @@
 .companion-status {
     font-size: 0.75rem;
     color: #706e6b;
+    display: flex;
+    align-items: center;
 }
 
-.companion-count, .no-companions {
-    text-align: center;
-    padding: 0.5rem;
-    font-size: 0.8rem;
-    color: #706e6b;
-    border-top: 1px solid #f1f1f1;
-    margin-top: 0.5rem;
+.companion-status.confirmed::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #4caf50;
+    margin-right: 4px;
+}
+
+.companion-status.invited::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #ffb74d;
+    margin-right: 4px;
+}
+
+.section-header {
+    position: relative;
+}
+
+.section-header::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 40px;
+    height: 3px;
+    background-color: #0070d2;
 }
 
 .no-companions {
+    text-align: center;
+    padding: 1.5rem;
+    font-size: 0.8rem;
+    color: #706e6b;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    margin-top: 0.5rem;
     font-style: italic;
+}
+
+/* Contact selection modal styling */
+.contact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.contact-card {
+    border: 2px solid #e5e5e5;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+    margin-bottom: 0.5rem;
+}
+
+.contact-card:hover {
+    border-color: #1976d2;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.contact-card.selected {
+    border-color: #1976d2;
+    background: #e3f2fd;
+}
+
+.contact-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.contact-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #032d60;
+}
+
+.contact-email {
+    font-size: 0.75rem;
+    color: #706e6b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.check-icon {
+    background: #1976d2;
+    border-radius: 50%;
+    padding: 2px;
+}
+
+.success-container {
+    padding: 2rem 1rem;
+}
+
+.empty-state {
+    padding: 3rem 1rem;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    text-align: center;
+    color: #706e6b;
+}
+
+/* Companion Details Modal Styling */
+.companion-profile {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #f2f2f2;
+}
+
+.profile-image-container {
+    margin-right: 1.5rem;
+}
+
+.profile-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.profile-info {
+    flex: 1;
+}
+
+.profile-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #032d60;
+    margin-bottom: 0.5rem;
+}
+
+.profile-email, .profile-phone {
+    font-size: 0.85rem;
+    color: #706e6b;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+}
+
+.profile-status {
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.profile-status.confirmed {
+    color: #2e844a;
+}
+
+.profile-status.invited {
+    color: #e78c3d;
+}
+
+.status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.profile-status.confirmed .status-indicator {
+    background-color: #4caf50;
+}
+
+.profile-status.invited .status-indicator {
+    background-color: #ffb74d;
+}
+
+/* Section Styling */
+.details-section {
+    background-color: #f9f9f9;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #032d60;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+/* Trip History Section */
+.shared-trips-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.trip-count-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #e3f2fd;
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    align-self: center;
+}
+
+.trip-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1976d2;
+}
+
+.trip-label {
+    font-size: 0.8rem;
+    color: #4a4a4a;
+}
+
+.trip-list {
+    list-style: none;
+    padding: 0;
+}
+
+.trip-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.trip-item:last-child {
+    border-bottom: none;
+}
+
+.trip-item-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+}
+
+.trip-item-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #032d60;
+}
+
+.trip-item-date {
+    font-size: 0.75rem;
+    color: #706e6b;
+}
+
+.trip-item-destination {
+    font-size: 0.8rem;
+    color: #706e6b;
+    display: flex;
+    align-items: center;
+}
+
+.empty-trips-message, .empty-expenses-message {
+    text-align: center;
+    font-style: italic;
+    color: #706e6b;
+    padding: 1rem;
+}
+
+/* Expenses Section */
+.expense-summary {
+    background-color: white;
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.expense-total {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #f2f2f2;
+}
+
+.expense-share {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.expense-label {
+    font-size: 0.85rem;
+    color: #706e6b;
+    margin-right: 0.5rem;
+    flex: 0 0 auto;
+}
+
+.expense-amount {
+    font-weight: 600;
+    color: #032d60;
+}
+
+.expense-progress {
+    flex: 1;
+    height: 8px;
+    background-color: #e5e5e5;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 0 0.5rem;
+    min-width: 100px;
+}
+
+.expense-bar {
+    height: 100%;
+    background-color: #1976d2;
+    border-radius: 4px;
+}
+
+.expense-percentage {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #1976d2;
+}
+
+.expense-list-container {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.expense-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e5e5e5;
+    background-color: white;
+    margin-bottom: 0.5rem;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.expense-item:last-child {
+    margin-bottom: 0;
+}
+
+.expense-item-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+}
+
+.expense-item-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #032d60;
+}
+
+.expense-item-amount {
+    font-weight: 600;
+    color: #1976d2;
+}
+
+.expense-item-details {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #706e6b;
+}
+
+.expense-item-category {
+    background-color: #f2f2f2;
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+    .profile-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .profile-image-container {
+        margin-right: 0;
+        margin-bottom: 1rem;
+    }
+    
+    .expense-share {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .expense-progress {
+        width: 100%;
+        margin: 0.5rem 0;
+    }
+}.companion-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+}
+
+.companion-card {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    background-color: #f7f7f7;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.companion-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Confirmed companion styling */
+.confirmed-card {
+    border-left: 3px solid #4caf50;
+}
+
+.confirmed-card:hover {
+    background-color: #e0f4ff;
+}
+
+/* Invited companion styling */
+.invited-card {
+    border-left: 3px solid #ffb74d;
+    background-color: #fffaf2;
+}
+
+.invited-card:hover {
+    background-color: #fff4e0;
+}
+
+.companion-photo-container {
+    position: relative;
+    margin-right: 0.75rem;
+}
+
+.companion-photo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.trip-count {
+    position: absolute;
+    bottom: -5px;
+    right: -5px;
+    background-color: #0070d2;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+}
+
+.invited-badge {
+    background-color: #ffb74d;
+}
+
+.companion-details {
+    flex: 1;
+}
+
+.companion-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 0.125rem;
+    color: #032d60;
+}
+
+.companion-status {
+    font-size: 0.75rem;
+    color: #706e6b;
+    display: flex;
+    align-items: center;
+}
+
+.companion-status.confirmed::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #4caf50;
+    margin-right: 4px;
+}
+
+.companion-status.invited::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #ffb74d;
+    margin-right: 4px;
+}
+
+.section-header {
+    position: relative;
+}
+
+.section-header::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 40px;
+    height: 3px;
+    background-color: #0070d2;
+}
+
+.no-companions {
+    text-align: center;
+    padding: 1.5rem;
+    font-size: 0.8rem;
+    color: #706e6b;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+/* Contact selection modal styling */
+.contact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+/* Companion Details Modal Styling */
+.companion-profile {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #f2f2f2;
+}
+
+.profile-image-container {
+    margin-right: 1.5rem;
+}
+
+.profile-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.profile-info {
+    flex: 1;
+}
+
+.profile-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #032d60;
+    margin-bottom: 0.5rem;
+}
+
+.profile-email, .profile-phone {
+    font-size: 0.85rem;
+    color: #706e6b;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+}
+
+.profile-status {
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.profile-status.confirmed {
+    color: #2e844a;
+}
+
+.profile-status.invited {
+    color: #e78c3d;
+}
+
+.status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.profile-status.confirmed .status-indicator {
+    background-color: #4caf50;
+}
+
+.profile-status.invited .status-indicator {
+    background-color: #ffb74d;
+}
+
+/* Section Styling */
+.details-section {
+    background-color: #f9f9f9;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #032d60;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+/* Trip History Section */
+.shared-trips-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.trip-count-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #e3f2fd;
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    align-self: center;
+}
+
+.trip-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1976d2;
+}
+
+.trip-label {
+    font-size: 0.8rem;
+    color: #4a4a4a;
+}
+
+.trip-list {
+    list-style: none;
+    padding: 0;
+}
+
+.trip-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.trip-item:last-child {
+    border-bottom: none;
+}
+
+.trip-item-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+}
+
+.trip-item-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #032d60;
+}
+
+.trip-item-date {
+    font-size: 0.75rem;
+    color: #706e6b;
+}
+
+.trip-item-destination {
+    font-size: 0.8rem;
+    color: #706e6b;
+    display: flex;
+    align-items: center;
+}
+
+.empty-trips-message, .empty-expenses-message {
+    text-align: center;
+    font-style: italic;
+    color: #706e6b;
+    padding: 1rem;
+}
+
+/* Expenses Section */
+.expense-summary {
+    background-color: white;
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.expense-total {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #f2f2f2;
+}
+
+.expense-share {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.expense-label {
+    font-size: 0.85rem;
+    color: #706e6b;
+    margin-right: 0.5rem;
+    flex: 0 0 auto;
+}
+
+.expense-amount {
+    font-weight: 600;
+    color: #032d60;
+}
+
+.expense-progress {
+    flex: 1;
+    height: 8px;
+    background-color: #e5e5e5;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 0 0.5rem;
+    min-width: 100px;
+}
+
+.expense-bar {
+    height: 100%;
+    background-color: #1976d2;
+    border-radius: 4px;
+}
+
+.expense-percentage {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #1976d2;
+}
+
+.expense-list-container {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.expense-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e5e5e5;
+    background-color: white;
+    margin-bottom: 0.5rem;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.expense-item:last-child {
+    margin-bottom: 0;
+}
+
+.expense-item-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+}
+
+.expense-item-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #032d60;
+}
+
+.expense-item-amount {
+    font-weight: 600;
+    color: #1976d2;
+}
+
+.expense-item-details {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #706e6b;
+}
+
+.expense-item-category {
+    background-color: #f2f2f2;
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+    .profile-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .profile-image-container {
+        margin-right: 0;
+        margin-bottom: 1rem;
+    }
+    
+    .expense-share {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .expense-progress {
+        width: 100%;
+        margin: 0.5rem 0;
+    }
+}
+
+.contact-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.contact-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #032d60;
+}
+
+.contact-email {
+    font-size: 0.75rem;
+    color: #706e6b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.check-icon {
+    background: #1976d2;
+    border-radius: 50%;
+    padding: 2px;
+}
+
+.success-container {
+    padding: 2rem 1rem;
+}
+
+.empty-state {
+    padding: 3rem 1rem;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    text-align: center;
+    color: #706e6b;
 }

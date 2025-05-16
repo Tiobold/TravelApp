@@ -1,5 +1,15 @@
 <template>
     <lightning-card title="Travel Companions" icon-name="custom:custom107">
+        <!-- Action Section -->
+        <div slot="actions">
+            <lightning-button 
+                label="Invite People" 
+                icon-name="utility:user_add" 
+                variant="brand" 
+                onclick={handleOpenInviteModal}>
+            </lightning-button>
+        </div>
+    
         <div class="slds-var-p-horizontal_small">
             <template if:true={isLoading}>
                 <lightning-spinner alternative-text="Loading companions" size="small"></lightning-spinner>
@@ -10,33 +20,407 @@
             </template>
             
             <template if:false={error}>
-                <div class="companion-container">
-                    <template for:each={companions} for:item="companion">
-                        <div key={companion.key} class="companion-card" data-id={companion.Id} onclick={handleCompanionClick}>
+                <!-- Current User Section (You) -->
+                <template if:true={hasCurrentUserCompanion}>
+                    <div class="section-header slds-var-p-around_x-small">
+                        <div class="slds-text-heading_small slds-var-p-bottom_x-small">
+                            You
+                        </div>
+                    </div>
+                    <div class="companion-container current-user-container">
+                        <div class="companion-card current-user-card" data-id={currentUserCompanion.Id} onclick={handleCompanionClick}>
                             <div class="companion-photo-container">
-                                <img src={companion.photoUrl} alt={companion.Name} class="companion-photo" />
-                                <div class="trip-count">{companion.TripCount}</div>
+                                <img src={currentUserCompanion.photoUrl} alt={currentUserCompanion.Name} class="companion-photo" />
+                                <div class="trip-count owner-badge">You</div>
                             </div>
                             <div class="companion-details">
-                                <p class="companion-name">{companion.Name}</p>
-                                <p class="companion-status">{companion.Status}</p>
+                                <p class="companion-name">{currentUserCompanion.Name}</p>
+                                <p class="companion-status owner">Trip Owner</p>
                             </div>
                         </div>
-                    </template>
-                    
-                    <template if:true={companions.length}>
-                        <div class="companion-count">
-                            <p>{companions.length} confirmed companion(s)</p>
+                    </div>
+                </template>
+                
+                <!-- Confirmed Companions Section -->
+                <template if:true={hasConfirmedCompanions}>
+                    <div class="section-header slds-var-p-around_x-small">
+                        <div class="slds-text-heading_small slds-var-p-bottom_x-small">
+                            Confirmed ({confirmedCount})
                         </div>
-                    </template>
-                    
-                    <template if:false={companions.length}>
-                        <div class="no-companions">
-                            <p>No confirmed companions for this trip</p>
+                    </div>
+                    <div class="companion-container confirmed-container">
+                        <template for:each={confirmedCompanions} for:item="companion">
+                            <div key={companion.key} class="companion-card confirmed-card" data-id={companion.Id} onclick={handleCompanionClick}>
+                                <div class="companion-photo-container">
+                                    <img src={companion.photoUrl} alt={companion.Name} class="companion-photo" />
+                                    <div class="trip-count">{companion.TripCount}</div>
+                                </div>
+                                <div class="companion-details">
+                                    <p class="companion-name">{companion.Name}</p>
+                                    <p class="companion-status confirmed">Confirmed</p>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+                
+                <!-- Invited Companions Section -->
+                <template if:true={hasInvitedCompanions}>
+                    <div class="section-header slds-var-p-around_x-small slds-var-m-top_small">
+                        <div class="slds-text-heading_small slds-var-p-bottom_x-small">
+                            Awaiting Response ({invitedCount})
                         </div>
-                    </template>
-                </div>
+                    </div>
+                    <div class="companion-container invited-container">
+                        <template for:each={invitedCompanions} for:item="companion">
+                            <div key={companion.key} class="companion-card invited-card" data-id={companion.Id} onclick={handleCompanionClick}>
+                                <div class="companion-photo-container">
+                                    <img src={companion.photoUrl} alt={companion.Name} class="companion-photo" />
+                                    <div class="trip-count invited-badge">{companion.TripCount}</div>
+                                </div>
+                                <div class="companion-details">
+                                    <p class="companion-name">{companion.Name}</p>
+                                    <p class="companion-status invited">Invited</p>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+                
+                <!-- No Companions Message -->
+                <template if:true={showNoCompanionsMessage}>
+                    <div class="no-companions">
+                        <p>No other companions for this trip</p>
+                        <lightning-button 
+                            label="Invite People" 
+                            icon-name="utility:user_add" 
+                            variant="brand" 
+                            class="slds-m-top_medium"
+                            onclick={handleOpenInviteModal}>
+                        </lightning-button>
+                    </div>
+                </template>
             </template>
         </div>
     </lightning-card>
+
+    <!-- Invite People Modal -->
+    <template if:true={showInviteModal}>
+        <section role="dialog" tabindex="-1" aria-modal="true" aria-labelledby="invite-modal-heading" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <lightning-button-icon 
+                        icon-name="utility:close" 
+                        class="slds-modal__close" 
+                        onclick={handleCloseInviteModal} 
+                        alternative-text="Close" 
+                        title="Close">
+                    </lightning-button-icon>
+                    <h2 id="invite-modal-heading" class="slds-modal__title slds-hyphenate">Invite People</h2>
+                </header>
+                
+                <div class="slds-modal__content slds-p-around_medium" id="invite-modal-content">
+                    <!-- Loading Spinner -->
+                    <template if:true={isContactsLoading}>
+                        <lightning-spinner alternative-text="Loading contacts..." size="medium"></lightning-spinner>
+                    </template>
+                    
+                    <!-- Search Box -->
+                    <div class="slds-form-element slds-m-bottom_medium">
+                        <div class="slds-form-element__control">
+                            <lightning-input 
+                                type="search" 
+                                label="Search Contacts" 
+                                placeholder="Search by name or email" 
+                                value={searchTerm}
+                                onchange={handleSearchChange}
+                                onkeypress={handleSearchKeyPress}>
+                            </lightning-input>
+                        </div>
+                    </div>
+                    
+                    <!-- Contacts Grid -->
+                    <template if:true={hasContacts}>
+                        <div class="contact-grid">
+                            <template for:each={filteredContacts} for:item="contact">
+                                <div key={contact.Id} 
+                                     class={contact.cardClass} 
+                                     data-id={contact.Id} 
+                                     onclick={handleContactSelection}>
+                                    <div class="contact-header">
+                                        <h4 class="contact-name">{contact.Name}</h4>
+                                        <template if:true={contact.isSelected}>
+                                            <lightning-icon icon-name="utility:check" 
+                                                          variant="inverse" 
+                                                          size="small" 
+                                                          class="check-icon">
+                                            </lightning-icon>
+                                        </template>
+                                    </div>
+                                    <p class="contact-email">{contact.Email}</p>
+                                </div>
+                            </template>
+                        </div>
+                        
+                        <div class="slds-m-top_medium slds-text-align_center">
+                            <p class="slds-text-body_small slds-text-color_weak">
+                                Selected: {selectedContactCount} {contactLabel}
+                            </p>
+                            
+                            <template if:true={showLoadMore}>
+                                <lightning-button 
+                                    label="Load More" 
+                                    variant="brand-outline" 
+                                    onclick={handleLoadMore}
+                                    class="slds-m-top_small">
+                                </lightning-button>
+                            </template>
+                        </div>
+                    </template>
+                    
+                    <!-- No Contacts Found -->
+                    <template if:false={hasContacts}>
+                        <div class="empty-state">
+                            <lightning-icon icon-name="utility:people" size="medium"></lightning-icon>
+                            <p class="slds-m-top_small">No contacts found</p>
+                        </div>
+                    </template>
+                </div>
+                
+                <footer class="slds-modal__footer">
+                    <lightning-button 
+                        label="Cancel" 
+                        onclick={handleCloseInviteModal} 
+                        class="slds-m-right_x-small">
+                    </lightning-button>
+                    <lightning-button 
+                        label="Send Invitations" 
+                        variant="brand" 
+                        onclick={handleSendInvitations}
+                        disabled={isSendDisabled}>
+                    </lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+    
+    <!-- Success/Progress Modal -->
+    <template if:true={showProgressModal}>
+        <section role="dialog" tabindex="-1" aria-modal="true" aria-labelledby="progress-modal-heading" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <h2 id="progress-modal-heading" class="slds-modal__title slds-hyphenate">Sending Invitations</h2>
+                </header>
+                
+                <div class="slds-modal__content slds-p-around_medium slds-text-align_center" id="progress-modal-content">
+                    <template if:true={isSending}>
+                        <lightning-spinner alternative-text="Sending invitations..." size="large"></lightning-spinner>
+                        <p class="slds-m-top_large">{progressMessage}</p>
+                    </template>
+                    
+                    <template if:true={showInvitationSuccess}>
+                        <div class="success-container">
+                            <lightning-icon icon-name="utility:success" size="large" variant="success" class="slds-m-bottom_medium"></lightning-icon>
+                            <h3 class="slds-text-heading_medium slds-m-bottom_small">Invitations Sent Successfully!</h3>
+                            <p>Invitations have been sent to {selectedContactCount} {contactLabel}.</p>
+                        </div>
+                    </template>
+                </div>
+                
+                <footer class="slds-modal__footer">
+                    <template if:true={showInvitationSuccess}>
+                        <lightning-button 
+                            label="Close" 
+                            variant="brand" 
+                            onclick={handleCloseSuccessModal}>
+                        </lightning-button>
+                    </template>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+    <!-- Companion Details Modal -->
+    <template if:true={showCompanionDetailsModal}>
+        <section role="dialog" tabindex="-1" aria-modal="true" aria-labelledby="companion-details-heading" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <lightning-button-icon 
+                        icon-name="utility:close" 
+                        class="slds-modal__close" 
+                        onclick={handleCloseCompanionDetails} 
+                        alternative-text="Close" 
+                        title="Close">
+                    </lightning-button-icon>
+                    <h2 id="companion-details-heading" class="slds-modal__title slds-hyphenate">
+                        <template if:true={isCurrentUserProfile}>Your Profile</template>
+                        <template if:false={isCurrentUserProfile}>Companion Details</template>
+                    </h2>
+                </header>
+                
+                <div class="slds-modal__content slds-p-around_medium" id="companion-details-content">
+                    <!-- Loading Spinner -->
+                    <template if:true={isCompanionDetailsLoading}>
+                        <lightning-spinner alternative-text="Loading details..." size="medium"></lightning-spinner>
+                    </template>
+                    
+                    <!-- Companion Profile -->
+                    <template if:false={isCompanionDetailsLoading}>
+                        <div class="companion-profile">
+                            <div class="profile-header">
+                                <div class="profile-image-container">
+                                    <img src={selectedCompanion.photoUrl} alt={selectedCompanion.Name} class="profile-image" />
+                                </div>
+                                <div class="profile-info">
+                                    <h3 class="profile-name">{selectedCompanion.Name}</h3>
+                                    <template if:true={selectedCompanion.Email}>
+                                        <p class="profile-email">
+                                            <lightning-icon icon-name="utility:email" size="x-small" class="slds-m-right_xx-small"></lightning-icon>
+                                            <a href={selectedCompanion.emailLink} target="_blank">{selectedCompanion.Email}</a>
+                                        </p>
+                                    </template>
+                                    <template if:true={selectedCompanion.Phone}>
+                                        <p class="profile-phone">
+                                            <lightning-icon icon-name="utility:call" size="x-small" class="slds-m-right_xx-small"></lightning-icon>
+                                            <a href={selectedCompanion.phoneLink}>{selectedCompanion.Phone}</a>
+                                        </p>
+                                    </template>
+                                    <p class={selectedCompanion.statusClass}>
+                                        <span class="status-indicator"></span>
+                                        <template if:true={isCurrentUserProfile}>Trip Owner</template>
+                                        <template if:false={isCurrentUserProfile}>{selectedCompanion.Status}</template>
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <!-- Trip History Section -->
+                            <div class="details-section trip-history-section">
+                                <h4 class="section-title">
+                                    <lightning-icon icon-name="utility:travel_and_places" size="small" class="slds-m-right_x-small"></lightning-icon>
+                                    Travel History
+                                </h4>
+                                <template if:true={hasSharedTrips}>
+                                    <div class="shared-trips-container">
+                                        <div class="trip-count-badge">
+                                            <span class="trip-number">{selectedCompanion.TripCount}</span>
+                                            <span class="trip-label">{tripCountLabel}</span>
+                                        </div>
+                                        <ul class="trip-list">
+                                            <template for:each={sharedTrips} for:item="trip">
+                                                <li key={trip.Id} class="trip-item">
+                                                    <div class="trip-item-header">
+                                                        <span class="trip-item-name">{trip.Name}</span>
+                                                        <span class="trip-item-date">{trip.formattedDate}</span>
+                                                    </div>
+                                                    <div class="trip-item-destination">
+                                                        <lightning-icon icon-name="utility:world" size="x-small" class="slds-m-right_xx-small"></lightning-icon>
+                                                        {trip.Destination__c}
+                                                    </div>
+                                                </li>
+                                            </template>
+                                        </ul>
+                                    </div>
+                                </template>
+                                <template if:false={hasSharedTrips}>
+                                    <div class="empty-trips-message">
+                                        <template if:true={isCurrentUserProfile}>
+                                            This is your first organized trip!
+                                        </template>
+                                        <template if:false={isCurrentUserProfile}>
+                                            No previous trips together. This is your first adventure!
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                            
+                            <!-- Expenses Section -->
+                            <div class="details-section expenses-section">
+                                <h4 class="section-title">
+                                    <lightning-icon icon-name="utility:moneybag" size="small" class="slds-m-right_x-small"></lightning-icon>
+                                    Expenses for Current Trip
+                                </h4>
+                                <template if:true={hasCompanionExpenses}>
+                                    <div class="expense-summary">
+                                        <div class="expense-total">
+                                            <span class="expense-label">
+                                                <template if:true={isCurrentUserProfile}>
+                                                    Total Paid By You:
+                                                </template>
+                                                <template if:false={isCurrentUserProfile}>
+                                                    Total Paid By {selectedCompanion.FirstName}:
+                                                </template>
+                                            </span>
+                                            <span class="expense-amount">
+                                                <lightning-formatted-number 
+                                                    value={expenseTotal} 
+                                                    format-style="currency" 
+                                                    currency-code="EUR">
+                                                </lightning-formatted-number>
+                                            </span>
+                                        </div>
+                                        <div class="expense-share">
+                                            <span class="expense-label">Share of Trip:</span>
+                                            <div class="expense-progress">
+                                                <div class="expense-bar" style={expenseShareStyle}></div>
+                                            </div>
+                                            <span class="expense-percentage">{expensePercentage}%</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="expense-list-container">
+                                        <template for:each={companionExpenses} for:item="expense">
+                                            <div key={expense.Id} class="expense-item">
+                                                <div class="expense-item-header">
+                                                    <span class="expense-item-name">{expense.Name}</span>
+                                                    <span class="expense-item-amount">
+                                                        <lightning-formatted-number 
+                                                            value={expense.Amount__c} 
+                                                            format-style="currency" 
+                                                            currency-code="EUR">
+                                                        </lightning-formatted-number>
+                                                    </span>
+                                                </div>
+                                                <div class="expense-item-details">
+                                                    <span class="expense-item-category">{expense.Category__c}</span>
+                                                    <span class="expense-item-date">
+                                                        <lightning-formatted-date-time 
+                                                            value={expense.Date__c} 
+                                                            year="numeric" 
+                                                            month="short" 
+                                                            day="2-digit">
+                                                        </lightning-formatted-date-time>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                                <template if:false={hasCompanionExpenses}>
+                                    <div class="empty-expenses-message">
+                                        <template if:true={isCurrentUserProfile}>
+                                            You haven't recorded any expenses for this trip yet.
+                                        </template>
+                                        <template if:false={isCurrentUserProfile}>
+                                            No expenses recorded for this companion yet.
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                
+                <footer class="slds-modal__footer">
+                    <lightning-button 
+                        label="Close" 
+                        variant="brand" 
+                        onclick={handleCloseCompanionDetails}>
+                    </lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
 </template>
