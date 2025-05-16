@@ -1,0 +1,192 @@
+/* General Styles */
+.slds-text-heading_small {
+    font-weight: 600;
+    color: #032d60;
+}
+
+/* Location Details Styles */
+.location-header {
+    margin-bottom: 1rem;
+}
+
+.location-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #032d60;
+    margin-bottom: 0.25rem;
+}
+
+.location-type {
+    text-transform: capitalize;
+    font-size: 0.875rem;
+    color: #706e6b;
+}
+
+.location-rating {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.rating-value {
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.rating-stars {
+    display: flex;
+    margin: 0.25rem 0;
+}
+
+.star-full {
+    color: #ffb400;
+}
+
+.star-half {
+    color: #ffb400;
+}
+
+.star-empty {
+    color: #e0e5ee;
+}
+
+.location-description {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #3e3e3c;
+}
+
+.detail-item {
+    margin-bottom: 0.75rem;
+}
+
+.detail-label {
+    display: flex;
+    align-items: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #706e6b;
+    margin-bottom: 0.25rem;
+}
+
+.detail-value {
+    font-size: 0.875rem;
+}
+
+.tripadvisor-link {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.tripadvisor-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background-color: #00aa6c;
+    color: white;
+    border-radius: 4px;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+    text-decoration: none;
+    width: 100%;
+}
+
+.tripadvisor-button:hover {
+    background-color: #008a58;
+    color: white;
+    text-decoration: none;
+}
+
+/* Search Results Styles */
+.search-results {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.result-item {
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 0.75rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+}
+
+.result-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.result-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #032d60;
+}
+
+.result-rating {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.result-type {
+    text-transform: capitalize;
+    font-size: 0.75rem;
+    color: #706e6b;
+    margin-bottom: 0.25rem;
+}
+
+.result-address {
+    font-size: 0.75rem;
+    color: #3e3e3c;
+}
+
+.review-count {
+    font-size: 0.75rem;
+    color: #706e6b;
+}
+
+/* Back Button */
+.back-button {
+    margin-bottom: 1rem;
+}
+
+/* Loading State */
+.spinner-container {
+    display: flex;
+    justify-content: center;
+    padding: 2rem 0;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .result-header {
+        flex-direction: column;
+    }
+    
+    .result-rating {
+        align-items: flex-start;
+        margin-top: 0.5rem;
+    }
+    
+    .location-rating {
+        align-items: flex-start;
+        margin-top: 0.5rem;
+    }
+    
+    .slds-grid_align-spread {
+        display: block;
+    }
+    
+    .slds-col.slds-text-align_right {
+        text-align: left;
+    }
+}

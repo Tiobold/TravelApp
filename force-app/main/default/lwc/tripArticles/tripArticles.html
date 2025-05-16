@@ -1,0 +1,162 @@
+<template>
+    <lightning-card title="TripAdvisor Destination Guide" icon-name="standard:travel_mode">
+        <div slot="actions">
+            <lightning-button-icon 
+                icon-name="utility:refresh" 
+                alternative-text="Refresh" 
+                title="Refresh" 
+                onclick={refreshContent}>
+            </lightning-button-icon>
+        </div>
+        
+        <div class="slds-p-around_medium">
+            <!-- Loading Spinner -->
+            <template if:true={isLoading}>
+                <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+            </template>
+            
+            <!-- Error Display -->
+            <template if:true={error}>
+                <div class="slds-text-color_error slds-p-bottom_small">
+                    {errorMessage}
+                </div>
+            </template>
+            
+            <!-- Location Details View -->
+            <template if:true={showDetails}>
+                <!-- Location Header -->
+                <div class="location-header">
+                    <div class="location-header-content">
+                        <div class="slds-grid slds-grid_align-spread">
+                            <div class="slds-col">
+                                <h2 class="location-name">{locationDetails.name}</h2>
+                                <div class="location-type">{selectedLocation.type}</div>
+                            </div>
+                            <div class="slds-col slds-text-align_right">
+                                <template if:true={locationDetails.rating}>
+                                    <div class="location-rating">
+                                        <span class="rating-value">{locationDetails.rating}/5</span>
+                                        <div class="rating-stars">
+                                            <template for:each={formattedRating} for:item="star">
+                                                <span key={star.index} class={star.class}>★</span>
+                                            </template>
+                                        </div>
+                                        <div class="slds-text-body_small">
+                                            Based on {locationDetails.numReviews} reviews
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Back to Results Button (if multiple results) -->
+                    <template if:true={hasSearchResults}>
+                        <div class="back-button slds-m-top_small">
+                            <lightning-button 
+                                variant="neutral" 
+                                label="View All Results" 
+                                icon-name="utility:chevronleft" 
+                                onclick={handleBackToResults}>
+                            </lightning-button>
+                        </div>
+                    </template>
+                </div>
+                
+                <!-- Location Description -->
+                <template if:true={locationDetails.description}>
+                    <div class="location-description slds-m-top_medium">
+                        <div class="slds-text-heading_small slds-m-bottom_small">About</div>
+                        <p>{locationDetails.description}</p>
+                    </div>
+                </template>
+                
+                <!-- Location Details -->
+                <div class="location-details slds-m-top_medium">
+                    <div class="slds-grid slds-gutters">
+                        <div class="slds-col slds-size_1-of-2">
+                            <template if:true={locationDetails.address}>
+                                <div class="detail-item">
+                                    <div class="detail-label">
+                                        <lightning-icon icon-name="utility:location" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                        Address
+                                    </div>
+                                    <div class="detail-value">{locationDetails.address}</div>
+                                </div>
+                            </template>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2">
+                            <template if:true={locationDetails.phone}>
+                                <div class="detail-item">
+                                    <div class="detail-label">
+                                        <lightning-icon icon-name="utility:call" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                        Phone
+                                    </div>
+                                    <div class="detail-value">{locationDetails.phone}</div>
+                                </div>
+                            </template>
+                            
+                            <template if:true={locationDetails.website}>
+                                <div class="detail-item">
+                                    <div class="detail-label">
+                                        <lightning-icon icon-name="utility:link" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                        Website
+                                    </div>
+                                    <div class="detail-value">
+                                        <a href={locationDetails.website} target="_blank">{locationDetails.website}</a>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- TripAdvisor Link -->
+                <div class="tripadvisor-link slds-m-top_medium">
+                    <a href={locationDetails.webUrl} target="_blank" class="tripadvisor-button">
+                        <lightning-icon icon-name="utility:new_window" size="small" class="slds-m-right_x-small"></lightning-icon>
+                        View on TripAdvisor
+                    </a>
+                </div>
+            </template>
+            
+            <!-- Search Results View -->
+            <template if:false={showDetails}>
+                <template if:true={hasSearchResults}>
+                    <div class="slds-text-heading_small slds-m-bottom_small">
+                        Destinations in {countryName}
+                    </div>
+                    
+                    <div class="search-results">
+                        <template for:each={searchResults} for:item="location">
+                            <div key={location.id} class="result-item" data-id={location.id} onclick={handleLocationClick}>
+                                <div class="result-header">
+                                    <div class="result-name">{location.name}</div>
+                                    <template if:true={location.rating}>
+                                        <div class="result-rating">
+                                            <span class="rating-value">{location.rating}/5</span>
+                                            <span class="review-count">({location.numReviews} reviews)</span>
+                                        </div>
+                                    </template>
+                                </div>
+                                <div class="result-type">{location.type}</div>
+                                <template if:true={location.address}>
+                                    <div class="result-address">{location.address}</div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+                
+                <template if:false={hasSearchResults}>
+                    <div class="slds-illustration slds-illustration_small slds-p-around_small">
+                        <div class="slds-text-longform">
+                            <p class="slds-text-body_regular">No destinations found for {countryName}.</p>
+                            <p class="slds-text-body_regular">Try refreshing or check another country.</p>
+                        </div>
+                    </div>
+                </template>
+            </template>
+        </div>
+    </lightning-card>
+</template>

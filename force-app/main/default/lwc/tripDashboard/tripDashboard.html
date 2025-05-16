@@ -1,0 +1,237 @@
+<!-- tripDashboard.html -->
+<template>
+    <lightning-card title="Travel Management Dashboard" icon-name="custom:custom85" class="main-dashboard">
+        
+        <!-- Action Bar -->
+        <div slot="actions">
+            <lightning-button-group>
+                <lightning-button 
+                    variant="brand" 
+                    label="Plan New Trip" 
+                    icon-name="utility:add"
+                    onclick={handlePlanNewTrip}>
+                </lightning-button>
+                <lightning-button-icon
+                    icon-name="utility:refresh"
+                    variant="border-filled"
+                    alternative-text="Refresh"
+                    onclick={refreshData}>
+                </lightning-button-icon>
+            </lightning-button-group>
+        </div>
+
+        <!-- Main Dashboard Content -->
+        <div class="slds-p-around_medium">
+            <!-- Loading Spinner -->
+            <template if:true={isLoading}>
+                <lightning-spinner alternative-text="Loading dashboard..." size="medium"></lightning-spinner>
+            </template>
+
+            <!-- Error Display -->
+            <template if:true={error}>
+                <div class="slds-box slds-theme_error slds-m-bottom_medium">
+                    <p>{error.body.message}</p>
+                </div>
+            </template>
+
+            <!-- Trip Statistics Cards -->
+            <template if:true={hasTripStats}>
+                <div class="slds-grid slds-gutters slds-wrap stats-container slds-m-bottom_large">
+                    <div class="slds-col slds-size_1-of-1 slds-small-size_1-of-2 slds-medium-size_1-of-4">
+                        <lightning-card class="stat-card">
+                            <div class="slds-p-around_medium slds-text-align_center">
+                                <h3 class="slds-text-heading_small slds-text-color_weak">Total Budget</h3>
+                                <p class="slds-text-heading_large slds-m-top_small">
+                                    <lightning-formatted-number 
+                                        value={totalBudget} 
+                                        format-style="currency">
+                                    </lightning-formatted-number>
+                                </p>
+                            </div>
+                        </lightning-card>
+                    </div>
+
+                    <div class="slds-col slds-size_1-of-1 slds-small-size_1-of-2 slds-medium-size_1-of-4">
+                        <lightning-card class="stat-card">
+                            <div class="slds-p-around_medium slds-text-align_center">
+                                <h3 class="slds-text-heading_small slds-text-color_weak">Total Spent</h3>
+                                <p class="slds-text-heading_large slds-m-top_small">
+                                    <lightning-formatted-number 
+                                        value={totalSpent} 
+                                        format-style="currency">
+                                    </lightning-formatted-number>
+                                </p>
+                            </div>
+                        </lightning-card>
+                    </div>
+
+                    <div class="slds-col slds-size_1-of-1 slds-small-size_1-of-2 slds-medium-size_1-of-4">
+                        <lightning-card class="stat-card">
+                            <div class="slds-p-around_medium slds-text-align_center">
+                                <h3 class="slds-text-heading_small slds-text-color_weak">Average Trip Cost</h3>
+                                <p class="slds-text-heading_large slds-m-top_small">
+                                    <lightning-formatted-number 
+                                        value={averageTripCost} 
+                                        format-style="currency">
+                                    </lightning-formatted-number>
+                                </p>
+                            </div>
+                        </lightning-card>
+                    </div>
+
+                    <div class="slds-col slds-size_1-of-1 slds-small-size_1-of-2 slds-medium-size_1-of-4">
+                        <lightning-card class="stat-card">
+                            <div class="slds-p-around_medium slds-text-align_center">
+                                <h3 class="slds-text-heading_small slds-text-color_weak">Upcoming Trips</h3>
+                                <p class="slds-text-heading_large slds-m-top_small">{upcomingTrips}</p>
+                            </div>
+                        </lightning-card>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Trip Tabs -->
+            <div class="slds-tabs_default">
+                <ul class="slds-tabs_default__nav" role="tablist">
+                    <template for:each={tabs} for:item="tab">
+                        <li key={tab.value} 
+                            class="slds-tabs_default__item" 
+                            role="presentation">
+                            <a class="slds-tabs_default__link" 
+                               role="tab" 
+                               data-value={tab.value}
+                               onclick={handleTabChange}>
+                                {tab.label}
+                                <template if:true={tab.count}>
+                                    <span class="slds-badge slds-m-left_x-small">{tab.count}</span>
+                                </template>
+                            </a>
+                        </li>
+                    </template>
+                </ul>
+
+                <!-- Trip Content -->
+                <div class="slds-tabs_default__content slds-show">
+                    <!-- Filter Dropdown -->
+                    <!-- Trip Cards -->
+                    <template if:false={isLoading}>
+                        <template if:true={filteredTrips.length}>
+                            <div class="slds-grid slds-gutters slds-wrap">
+                                <template for:each={filteredTrips} for:item="trip">
+                                    <div key={trip.Id} class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
+                                        <lightning-card class="trip-card slds-m-bottom_medium">
+                                            <div class="slds-p-around_medium" data-id={trip.Id} onclick={handleViewTrip}>
+                                                <div class="trip-header">
+                                                    <h3 class="slds-text-heading_medium">{trip.Name}</h3>
+                                                    <template if:true={trip.isInProgress}>
+                                                        <lightning-badge class="slds-theme_warning">
+                                                            In Progress
+                                                        </lightning-badge>
+                                                    </template>
+                                                    <template if:true={trip.isCompleted}>
+                                                        <lightning-badge class="slds-theme_success">
+                                                            Completed
+                                                        </lightning-badge>
+                                                    </template>
+                                                    <template if:true={trip.isPlanned}>
+                                                        <lightning-badge>
+                                                            Planned
+                                                        </lightning-badge>
+                                                    </template>
+                                                </div>
+
+                                                <div class="trip-details slds-m-top_medium">
+                                                    <div class="slds-grid slds-gutters slds-m-bottom_small">
+                                                        <div class="slds-col slds-size_1-of-2">
+                                                            <p class="slds-text-body_small slds-text-color_weak">Start Date</p>
+                                                            <p class="slds-text-body_regular">
+                                                                {trip.startDateFormatted}
+                                                            </p>
+                                                        </div>
+                                                        <div class="slds-col slds-size_1-of-2">
+                                                            <p class="slds-text-body_small slds-text-color_weak">End Date</p>
+                                                            <p class="slds-text-body_regular">
+                                                                {trip.endDateFormatted}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Budget Progress -->
+                                                    <div class="slds-m-bottom_medium">
+                                                        <p class="slds-text-body_small slds-text-color_weak">Budget Progress</p>
+                                                        <lightning-progress-bar 
+                                                            value={trip.budgetPercentage}
+                                                            variant="base">
+                                                        </lightning-progress-bar>
+                                                        <div class="slds-grid slds-gutters slds-m-top_x-small">
+                                                            <div class="slds-col slds-size_1-of-2">
+                                                                <p class="slds-text-body_small">
+                                                                    Spent: <lightning-formatted-number 
+                                                                        value={trip.Total_Spent__c} 
+                                                                        format-style="currency">
+                                                                    </lightning-formatted-number>
+                                                                </p>
+                                                            </div>
+                                                            <div class="slds-col slds-size_1-of-2 slds-text-align_right">
+                                                                <p class="slds-text-body_small">
+                                                                    Budget: <lightning-formatted-number 
+                                                                        value={trip.Budget__c} 
+                                                                        format-style="currency">
+                                                                    </lightning-formatted-number>
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Card Actions -->
+                                            <footer class="slds-card__footer">
+                                                <lightning-button-group>
+                                                    <lightning-button 
+                                                        label="View Map" 
+                                                        icon-name="utility:location"
+                                                        data-id={trip.Id}
+                                                        onclick={handleViewMap}>
+                                                    </lightning-button>
+                                                    <lightning-button 
+                                                        label="View Expenses" 
+                                                        icon-name="utility:expense"
+                                                        data-id={trip.Id}
+                                                        onclick={handleViewExpenses}>
+                                                    </lightning-button>
+                                                </lightning-button-group>
+                                            </footer>
+                                        </lightning-card>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                        <!-- No Trips Found -->
+                        <template if:true={noTripsFound}>
+                            <div class="empty-state slds-box slds-theme_shade slds-text-align_center slds-p-around_large">
+                                <lightning-icon icon-name="utility:journey" size="large" class="slds-m-bottom_medium"></lightning-icon>
+                                <h3 class="slds-text-heading_medium">No Trips Found</h3>
+                                <p class="slds-text-body_regular slds-m-vertical_medium">
+                                    Start planning your next adventure by creating a new trip.
+                                </p>
+                                <lightning-button 
+                                    variant="brand" 
+                                    label="Plan New Trip" 
+                                    icon-name="utility:add"
+                                    onclick={handlePlanNewTrip}>
+                                </lightning-button>
+                            </div>
+                        </template>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </lightning-card>
+
+    <!-- Plan New Trip Modal (will be integrated with the TripPlanner component) -->
+    <template if:true={showPlanTripModal}>
+        <c-trip-planner onclose={handleClosePlanModal}></c-trip-planner>
+    </template>
+</template>

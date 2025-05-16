@@ -1,0 +1,274 @@
+<template>
+    <lightning-card
+        title={tripName}
+        icon-name="standard:location">
+
+        <!-- Action Buttons -->
+        <div slot="actions">
+            <lightning-button-group>
+                <lightning-button
+                    variant="brand"
+                    label="Add Item"
+                    icon-name="utility:add"
+                    onclick={handleAddItem}
+                    class="slds-m-right_small">
+                </lightning-button>
+            </lightning-button-group>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="slds-p-around_medium">
+            <!-- Loading Spinner -->
+            <template if:true={showSpinner}> 
+                <lightning-spinner alternative-text="Loading map..." size="medium"></lightning-spinner> 
+            </template>
+
+            <!-- Error Display -->
+            <template if:true={error}> 
+                <div class="slds-box slds-theme_error slds-m-bottom_medium"> 
+                    <h3 class="slds-text-heading_small"> 
+                        <lightning-icon icon-name="utility:error" size="small" variant="inverse"></lightning-icon> 
+                        An Error Occurred 
+                    </h3> 
+                    <p class="slds-m-top_small">{errorText}</p> 
+                </div> 
+            </template>
+
+            <!-- Map and Details Area -->
+            <template if:true={isDataAvailable}>
+                <!-- Trip Details Card - Now at the top -->
+                <div class="slds-m-bottom_medium">
+                    <div class="trip-details-horizontal">
+                        <div class="trip-detail-item">
+                            <span class="trip-detail-label">Start Date:</span>
+                            <lightning-formatted-date-time 
+                                value={tripStartDate} 
+                                year="numeric" 
+                                month="short" 
+                                day="numeric">
+                            </lightning-formatted-date-time>
+                        </div>
+                        <div class="trip-detail-item">
+                            <span class="trip-detail-label">End Date:</span>
+                            <lightning-formatted-date-time 
+                                value={tripEndDate} 
+                                year="numeric" 
+                                month="short" 
+                                day="numeric">
+                            </lightning-formatted-date-time>
+                        </div>
+                        <div class="trip-detail-item">
+                            <span class="trip-detail-label">Total Spent:</span>
+                            <a href="javascript:void(0);" onclick={handleTotalSpentClick} class="total-spent-link">
+                                <lightning-formatted-number
+                                    value={totalSpent}
+                                    format-style="currency"
+                                    currency-code="EUR">
+                                </lightning-formatted-number>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <lightning-layout multiple-rows="true" pull-to-boundary="small" class="main-layout">
+                    <!-- Map Column -->
+                    <lightning-layout-item size="12" medium-device-size="8" padding="around-small">
+                        <div class="map-container">
+                            <lightning-map 
+                                map-markers={mapMarkers} 
+                                markers-title="Trip Locations" 
+                                zoom-level={zoomLevel} 
+                                center={center} 
+                                selected-marker-value={selectedMarkerValue} 
+                                onmarkerselect={handleMarkerSelect} 
+                                options={mapOptions}
+                                list-view="hidden">
+                            </lightning-map>
+                            <!-- Custom zoom controls -->
+                            <div class="zoom-controls">
+                                <lightning-button-icon 
+                                    icon-name="utility:add" 
+                                    variant="bare" 
+                                    alternative-text="Zoom In" 
+                                    title="Zoom In" 
+                                    onclick={handleZoomIn}>
+                                </lightning-button-icon>
+                                <lightning-button-icon 
+                                    icon-name="utility:minus" 
+                                    variant="bare" 
+                                    alternative-text="Zoom Out" 
+                                    title="Zoom Out" 
+                                    onclick={handleZoomOut}>
+                                </lightning-button-icon>
+                            </div>
+                        </div>
+                    </lightning-layout-item>
+
+                    <!-- Itinerary Column (Restored the complete itinerary section) -->
+                    <lightning-layout-item size="12" medium-device-size="4" padding="around-small">
+                        <!-- Itinerary Card -->
+                        <lightning-card title="Itinerary" icon-name="standard:event">
+                            <div class="slds-p-around_medium">
+                                <template if:true={hasItineraryItems}>
+                                    <div class="itinerary-container slds-scrollable_y" style="max-height: 600px;">
+                                        <!-- Itinerary by Day -->
+                                        <template for:each={itineraryByDay} for:item="day">
+                                            <div key={day.date} class="itinerary-day">
+                                                <div class="day-header slds-media slds-media_center">
+                                                    <div class="slds-media__figure">
+                                                        <lightning-icon icon-name="utility:date_input" size="small"></lightning-icon>
+                                                    </div>
+                                                    <div class="slds-media__body">
+                                                        <h3 class="slds-text-heading_small">{day.label}</h3>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Day's Activities -->
+                                                <ul class="activities-list">
+                                                    <template for:each={day.items} for:item="item">
+                                                        <li key={item.Id} class="activity-item" data-id={item.Id} onclick={handleItineraryItemClick}>
+                                                            <div class="activity-time">
+                                                                <span>{item.formattedTime}</span>
+                                                                <template if:true={item.Duration_Hours__c}>
+                                                                    <span class="activity-duration">{item.Duration_Hours__c} hr</span>
+                                                                </template>
+                                                            </div>
+                                                            <div class="activity-content">
+                                                                <div class="activity-icon" style={item.iconStyle}>
+                                                                    <lightning-icon 
+                                                                        icon-name={item.icon}
+                                                                        size="small">
+                                                                    </lightning-icon>
+                                                                </div>
+                                                                <div class="activity-details">
+                                                                    <p class="activity-name">{item.Name}</p>
+                                                                    <p class="activity-location">{item.Location_Name__c}</p>
+                                                                    <template if:true={item.Notes__c}>
+                                                                        <p class="activity-notes">{item.Notes__c}</p>
+                                                                    </template>
+                                                                </div>
+                                                            </div>
+                                                        </li>
+                                                    </template>
+                                                </ul>
+                                            </div>
+                                        </template>
+                                        
+                                        <!-- Unscheduled Items -->
+                                        <template if:true={hasUnscheduledItems}>
+                                            <div class="itinerary-day">
+                                                <div class="day-header slds-media slds-media_center">
+                                                    <div class="slds-media__figure">
+                                                        <lightning-icon icon-name="utility:steps" size="small"></lightning-icon>
+                                                    </div>
+                                                    <div class="slds-media__body">
+                                                        <h3 class="slds-text-heading_small">Unscheduled Items</h3>
+                                                    </div>
+                                                </div>
+                                                <ul class="activities-list">
+                                                    <template for:each={unscheduledItems} for:item="item">
+                                                        <li key={item.Id} class="activity-item" data-id={item.Id} onclick={handleItineraryItemClick}>
+                                                            <div class="activity-content">
+                                                                <div class="activity-icon" style={item.iconStyle}>
+                                                                    <lightning-icon 
+                                                                        icon-name={item.icon}
+                                                                        size="small">
+                                                                    </lightning-icon>
+                                                                </div>
+                                                                <div class="activity-details">
+                                                                    <p class="activity-name">{item.Name}</p>
+                                                                    <p class="activity-location">{item.Location_Name__c}</p>
+                                                                    <template if:true={item.Notes__c}>
+                                                                        <p class="activity-notes">{item.Notes__c}</p>
+                                                                    </template>
+                                                                </div>
+                                                            </div>
+                                                        </li>
+                                                    </template>
+                                                </ul>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                                
+                                <!-- No Itinerary Items -->
+                                <template if:false={hasItineraryItems}>
+                                    <div class="slds-illustration slds-illustration_small">
+                                        <div class="slds-text-longform">
+                                            <p class="slds-text-body_regular">No itinerary items yet.</p>
+                                            <p class="slds-text-body_regular">Use the "Add Item" button to start planning your trip.</p>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </lightning-card>
+                    </lightning-layout-item>
+                </lightning-layout>
+            </template>
+
+            <!-- No Data Available Message -->
+            <template if:false={isDataAvailable}>
+                <template if:false={showSpinner}>
+                    <div class="empty-state slds-box slds-theme_shade">
+                        <lightning-icon icon-name="utility:travel_and_places" size="large" class="slds-m-bottom_medium"></lightning-icon>
+                        <h3 class="slds-text-heading_medium">Map is Empty</h3>
+                        <p class="slds-text-body_regular slds-m-vertical_medium">
+                            Start planning your trip by adding itinerary items.
+                        </p>
+                        <lightning-button variant="brand" label="Add First Item" icon-name="utility:add" onclick={handleAddItem}></lightning-button>
+                    </div>
+                </template>
+            </template>
+        </div> <!-- End slds-p-around_medium -->
+
+    </lightning-card>
+
+    <!-- Add Itinerary Item Modal -->
+    <template if:true={showAddItemModal}>
+        <section role="dialog" tabindex="-1" aria-modal="true" aria-labelledby="add-item-heading" class="slds-modal slds-fade-in-open slds-modal_large">
+            <div class="slds-modal__container">
+                <!-- Modal Header -->
+                <header class="slds-modal__header">
+                    <lightning-button-icon icon-name="utility:close" class="slds-modal__close" onclick={handleCloseAddItem} alternative-text="Close" title="Close"> </lightning-button-icon>
+                    <h2 id="add-item-heading" class="slds-modal__title slds-hyphenate">Add Itinerary Item</h2>
+                </header>
+
+                <!-- Modal Body - keeping original content -->
+                <div class="slds-modal__content slds-p-around_medium" id="add-item-content-id">
+                    <!-- Existing modal content -->
+                </div>
+
+                <!-- Modal Footer -->
+                <footer class="slds-modal__footer">
+                    <lightning-button label="Cancel" title="Cancel" onclick={handleCloseAddItem} disabled={isAdding} class="slds-m-right_x-small"> </lightning-button>
+                    <lightning-button variant="brand" label="Save" title="Save Item" onclick={handleSaveItem} disabled={isAdding}> </lightning-button>
+                     <template if:true={isAdding}> <lightning-spinner size="small" alternative-text="Saving..."></lightning-spinner> </template>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+    <!-- Expense Tracker Modal -->
+    <template if:true={showExpenseModal}>
+        <section role="dialog" tabindex="-1" aria-modal="true" aria-labelledby="expense-modal-heading" class="slds-modal slds-fade-in-open slds-modal_large">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <lightning-button-icon 
+                        icon-name="utility:close" 
+                        class="slds-modal__close" 
+                        onclick={handleCloseExpenseModal} 
+                        alternative-text="Close" 
+                        title="Close">
+                    </lightning-button-icon>
+                    <h2 id="expense-modal-heading" class="slds-modal__title slds-hyphenate">Trip Expenses</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_none slds-is-relative" id="expense-modal-content">
+                    <!-- Embed the expense tracker component -->
+                    <c-expense-tracker record-id={recordId}></c-expense-tracker>
+                </div>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

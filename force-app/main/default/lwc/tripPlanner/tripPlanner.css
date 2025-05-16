@@ -1,0 +1,80 @@
+/* tripPlanner.css */
+
+.step-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.contact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.contact-card {
+    border: 2px solid #e5e5e5;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.contact-card:hover {
+    border-color: #1976d2;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.contact-card.selected {
+    border-color: #1976d2;
+    background: #e3f2fd;
+}
+
+.contact-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.check-icon {
+    background: #1976d2;
+    border-radius: 50%;
+    padding: 2px;
+}
+
+.empty-state {
+    padding: 2rem;
+    margin-top: 1rem;
+}
+
+.progress-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    text-align: center;
+}
+
+.trip-planner-container {
+    background: white;
+    border: 1px solid #e5e5e5;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+/* Date range styling */
+.date-range-display {
+    background: #f3f3f3;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    margin-top: 0.5rem;
+}
+
+/* Form validation styling */
+lightning-input[data-has-error="true"] {
+    border-color: #c23934;
+}

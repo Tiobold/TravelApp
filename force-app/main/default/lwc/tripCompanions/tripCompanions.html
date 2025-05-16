@@ -1,0 +1,42 @@
+<template>
+    <lightning-card title="Travel Companions" icon-name="custom:custom107">
+        <div class="slds-var-p-horizontal_small">
+            <template if:true={isLoading}>
+                <lightning-spinner alternative-text="Loading companions" size="small"></lightning-spinner>
+            </template>
+            
+            <template if:true={error}>
+                <div class="slds-text-color_error slds-var-p-vertical_small">{error}</div>
+            </template>
+            
+            <template if:false={error}>
+                <div class="companion-container">
+                    <template for:each={companions} for:item="companion">
+                        <div key={companion.key} class="companion-card" data-id={companion.Id} onclick={handleCompanionClick}>
+                            <div class="companion-photo-container">
+                                <img src={companion.photoUrl} alt={companion.Name} class="companion-photo" />
+                                <div class="trip-count">{companion.TripCount}</div>
+                            </div>
+                            <div class="companion-details">
+                                <p class="companion-name">{companion.Name}</p>
+                                <p class="companion-status">{companion.Status}</p>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <template if:true={companions.length}>
+                        <div class="companion-count">
+                            <p>{companions.length} confirmed companion(s)</p>
+                        </div>
+                    </template>
+                    
+                    <template if:false={companions.length}>
+                        <div class="no-companions">
+                            <p>No confirmed companions for this trip</p>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template>

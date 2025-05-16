@@ -1,0 +1,66 @@
+.base-blue .slds-progress-bar__value {
+    background: rgb(21, 137, 238) !important; /* Force blue color */
+}
+
+lightning-progress-bar[variant="warning"] .slds-progress-bar__value {
+    background: rgb(255, 183, 93) !important; /* Force yellow */
+}
+
+lightning-progress-bar[variant="danger"] .slds-progress-bar__value {
+    background: rgb(254, 92, 76) !important; /* Force red */
+}
+.custom-progress-container {
+    margin-top: 1rem;
+}
+
+.custom-progress-bar {
+    position: relative;
+}
+
+.custom-progress-value {
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+/* Add to your existing CSS file */
+
+.total-spent-link {
+    color: var(--lwc-colorTextLink, #0070d2);
+    text-decoration: none;
+    transition: color 0.1s linear;
+    display: inline-block;
+    font-weight: 600;
+}
+
+.total-spent-link:hover {
+    color: var(--lwc-colorTextLinkHover, #005fb2);
+    text-decoration: underline;
+}
+
+.total-spent-link:active {
+    color: var(--lwc-colorTextLinkActive, #014486);
+}
+
+/* Progress bar styles */
+.base-blue .slds-progress-bar__value {
+    background: rgb(21, 137, 238) !important; /* Force blue color */
+}
+
+lightning-progress-bar[variant="warning"] .slds-progress-bar__value {
+    background: rgb(255, 183, 93) !important; /* Force yellow */
+}
+
+lightning-progress-bar[variant="danger"] .slds-progress-bar__value {
+    background: rgb(254, 92, 76) !important; /* Force red */
+}
+
+.custom-progress-container {
+    margin-top: 1rem;
+}
+
+.custom-progress-bar {
+    position: relative;
+}
+
+.custom-progress-value {
+    transition: width 0.3s ease, background-color 0.3s ease;
+}

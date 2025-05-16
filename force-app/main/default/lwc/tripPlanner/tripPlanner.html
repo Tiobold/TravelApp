@@ -1,0 +1,227 @@
+<!-- tripPlanner.html -->
+<template>
+    <template if:true={isModal}>
+        <section class={modalClass} role="dialog">
+            <div class={containerClass}>
+                <header class="slds-modal__header">
+                    <lightning-button-icon
+                        icon-name="utility:close"
+                        class="slds-modal__close"
+                        onclick={handleClose}
+                        alternative-text="Close"
+                        title="Close">
+                    </lightning-button-icon>
+                    <h2 class="slds-modal__title">Plan New Trip</h2>
+                </header>
+                
+                <!-- Modal Content -->
+                <div class="slds-modal__content slds-p-around_medium">
+                    <template if:false={showProgress}>
+                        <!-- Step 1: Basic Information -->
+                        <template if:true={isStep1}>
+                            <div class="step-content">
+                                <h3 class="slds-text-heading_medium slds-m-bottom_medium">Trip Details</h3>
+                                
+                                <lightning-input
+                                    name="tripName"
+                                    label="Trip Name"
+                                    value={tripName}
+                                    onchange={handleFieldChange}
+                                    required
+                                    class="slds-m-bottom_medium">
+                                </lightning-input>
+
+                                <lightning-input
+                                    name="destinationCountry"
+                                    label="Destination Country"
+                                    value={destinationCountry}
+                                    onchange={handleFieldChange}
+                                    required
+                                    class="slds-m-bottom_medium">
+                                </lightning-input>
+
+                                <div class="slds-grid slds-gutters slds-m-bottom_medium">
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <lightning-input
+                                            name="startDate"
+                                            label="Start Date"
+                                            type="date"
+                                            value={startDate}
+                                            onchange={handleFieldChange}
+                                            required>
+                                        </lightning-input>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <lightning-input
+                                            name="endDate"
+                                            label="End Date"
+                                            type="date"
+                                            value={endDate}
+                                            onchange={handleFieldChange}
+                                            required>
+                                        </lightning-input>
+                                    </div>
+                                </div>
+
+                                <template if:true={tripDuration}>
+                                    <div class="slds-text-body_small slds-text-color_weak slds-m-bottom_medium">
+                                        Duration: {tripDuration}
+                                    </div>
+                                </template>
+
+                                <div class="slds-grid slds-gutters slds-m-bottom_medium">
+                                    <div class="slds-col slds-size_2-of-3">
+                                        <lightning-input
+                                            name="budget"
+                                            label="Budget"
+                                            type="number"
+                                            value={budget}
+                                            onchange={handleFieldChange}
+                                            formatter="currency"
+                                            required>
+                                        </lightning-input>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-3">
+                                        <lightning-combobox
+                                            name="currency"
+                                            label="Currency"
+                                            value={currency}
+                                            options={currencyOptions}
+                                            onchange={handleFieldChange}
+                                            required>
+                                        </lightning-combobox>
+                                    </div>
+                                </div>
+
+                                <lightning-textarea
+                                    name="notes"
+                                    label="Notes (Optional)"
+                                    value={notes}
+                                    onchange={handleFieldChange}
+                                    rows="4">
+                                </lightning-textarea>
+                            </div>
+                        </template>
+
+                        <!-- Step 2: Invite Contacts -->
+                        <template if:true={isStep2}>
+                            <div class="step-content">
+                                <h3 class="slds-text-heading_medium slds-m-bottom_medium">Invite Friends</h3>
+                                
+                                <template if:true={isLoading}>
+                                    <lightning-spinner alternative-text="Loading contacts..." size="medium"></lightning-spinner>
+                                </template>
+
+                                <template if:false={isLoading}>
+                                    <template if:true={contacts.length}>
+                                        <div class="contact-grid">
+                                            <template for:each={contacts} for:item="contact">
+                                                <div key={contact.Id} 
+                                                     class="contact-card"
+                                                     data-id={contact.Id}
+                                                     onclick={handleContactSelection}>
+                                                    <div class="contact-header">
+                                                        <h4 class="slds-text-heading_small">{contact.Name}</h4>
+                                                        <template if:true={contact.isSelected}>
+                                                            <lightning-icon icon-name="utility:check" 
+                                                                          variant="inverse" 
+                                                                          size="small" 
+                                                                          class="check-icon">
+                                                            </lightning-icon>
+                                                        </template>
+                                                    </div>
+                                                    <p class="slds-text-body_small slds-text-color_weak">{contact.Email}</p>
+                                                </div>
+                                            </template>
+                                        </div>
+                                        
+                                        <div class="slds-m-top_medium">
+                                            <p class="slds-text-body_small slds-text-color_weak">
+                                                Selected: {selectedContactCount} {contactLabel}
+                                            </p>
+                                        </div>
+                                    </template>
+
+                                    <template if:false={contacts.length}>
+                                        <div class="empty-state slds-box slds-theme_shade slds-text-align_center">
+                                            <lightning-icon icon-name="utility:groups" size="large"></lightning-icon>
+                                            <p class="slds-m-top_medium">No contacts found</p>
+                                        </div>
+                                    </template>
+                                </template>
+
+                                <div class="slds-m-top_medium">
+                                    <h4 class="slds-text-heading_small slds-m-bottom_x-small">Survey Information</h4>
+                                    <p class="slds-text-body_regular">
+                                        Selected contacts will receive an invitation to participate in this trip. 
+                                        They'll be able to indicate their interest and availability through a survey.
+                                    </p>
+                                </div>
+                            </div>
+                        </template>
+                    </template>
+
+                    <!-- Progress Overlay -->
+                    <template if:true={showProgress}>
+                        <div class="progress-overlay">
+                            <lightning-spinner alternative-text={progressMessage} size="large"></lightning-spinner>
+                            <p class="slds-text-heading_medium slds-m-top_medium">{progressMessage}</p>
+                            
+                            <template if:true={showInvitationSuccess}>
+                                <p class="slds-text-body_regular slds-m-top_medium slds-text-color_success">
+                                    Invitations sent successfully! Redirecting to your trip...
+                                </p>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Modal Footer -->
+                <footer class="slds-modal__footer">
+                    <template if:false={showProgress}>
+                        <lightning-button-group>
+                            <lightning-button 
+                                label="Cancel"
+                                onclick={handleClose}
+                                class="slds-m-right_x-small">
+                            </lightning-button>
+                            
+                            <template if:true={isStep2}>
+                                <lightning-button 
+                                    label="Previous"
+                                    onclick={handlePrevious}
+                                    class="slds-m-right_x-small">
+                                </lightning-button>
+                            </template>
+                            
+                            <template if:true={isStep1}>
+                                <lightning-button 
+                                    variant="brand"
+                                    label="Next"
+                                    onclick={handleNext}>
+                                </lightning-button>
+                            </template>
+                            
+                            <template if:true={isStep2}>
+                                <lightning-button 
+                                    variant="brand"
+                                    label="Create Trip"
+                                    onclick={handleCreateTrip}
+                                    disabled={isCreating}>
+                                </lightning-button>
+                            </template>
+                        </lightning-button-group>
+                    </template>
+                </footer>
+            </div>
+        </section>
+        <div class={backdropClass}></div>
+    </template>
+
+    <!-- Non-modal usage (if needed) -->
+    <template if:false={isModal}>
+        <div class={containerClass}>
+            <!-- Same content as modal without wrapper -->
+        </div>
+    </template>
+</template>
