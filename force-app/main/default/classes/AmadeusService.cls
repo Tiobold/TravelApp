@@ -139,9 +139,9 @@ public with sharing class AmadeusService {
         try {
             Map<String, String> parameters = new Map<String, String>();
             parameters.put('cityCode', cityCode);
-            parameters.put('checkInDate', checkInDate);
-            parameters.put('checkOutDate', checkOutDate);
-            parameters.put('adults', String.valueOf(adults != null ? adults : 1));
+            //parameters.put('checkInDate', checkInDate);
+            //parameters.put('checkOutDate', checkOutDate);
+            parameters.put('radius', String.valueOf(adults != null ? adults : 1));
             
             // First, get hotel list for the city
             HttpResponse response = makeApiCall('/v1/reference-data/locations/hotels/by-city', parameters);

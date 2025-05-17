@@ -10,6 +10,7 @@
     background: #f8f9fa;
     border-radius: 0.5rem 0.5rem 0 0;
     padding: 0.25rem;
+    border-bottom: 1px solid #d8dde6;
 }
 
 .search-tabs .slds-tabs_default__item {
@@ -24,20 +25,21 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-}
-
-.tab-icon {
-    --sds-c-icon-color-foreground-default: currentColor;
+    color: #706e6b;
+    text-decoration: none;
+    cursor: pointer;
 }
 
 .search-tabs .slds-tabs_default__item:not(.slds-is-active) .slds-tabs_default__link:hover {
     background: rgba(255, 255, 255, 0.5);
+    color: #0176d3;
 }
 
 .search-tabs .slds-tabs_default__item.slds-is-active .slds-tabs_default__link {
     background: white;
     color: #0176d3;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-weight: 600;
 }
 
 /* Search Form Styles */
@@ -91,12 +93,12 @@
     font-size: 0.875rem;
     color: #032d60;
     font-weight: 500;
+    margin-bottom: 0.125rem;
 }
 
 .suggestion-sub {
     font-size: 0.75rem;
     color: #706e6b;
-    margin-top: 0.125rem;
 }
 
 .search-button-col {
@@ -196,7 +198,7 @@
     align-items: center;
 }
 
-/* Flight Timeline Styles */
+/* Flight Timeline Styles - Fixed and Enhanced */
 .flight-timeline {
     display: flex;
     flex-direction: column;
@@ -207,6 +209,7 @@
     display: flex;
     align-items: center;
     position: relative;
+    padding: 0.5rem 0;
 }
 
 .timeline-point {
@@ -215,6 +218,7 @@
     align-items: center;
     min-width: 100px;
     position: relative;
+    z-index: 2;
 }
 
 .timeline-time {
@@ -236,28 +240,35 @@
     padding: 0.5rem;
     border-radius: 0.5rem;
     border: 2px solid #e3f2fd;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .timeline-path {
     flex: 1;
     margin: 0 1rem;
     position: relative;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
 }
 
 .flight-line {
-    height: 2px;
+    height: 3px;
     background: linear-gradient(to right, #0176d3, #1a73e8);
     position: relative;
+    width: 100%;
+    border-radius: 2px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.flight-line::before {
+.flight-line::after {
     content: '';
     position: absolute;
-    right: -5px;
-    top: -3px;
+    right: -6px;
+    top: 50%;
+    transform: translateY(-50%);
     width: 0;
     height: 0;
     border-left: 8px solid #1a73e8;
@@ -278,11 +289,13 @@
     gap: 0.25rem;
     position: absolute;
     white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    z-index: 3;
 }
 
 .connection-indicator {
     position: absolute;
-    bottom: -1.5rem;
+    bottom: -2rem;
     left: 50%;
     transform: translateX(-50%);
     background: #fff3cd;
@@ -295,6 +308,8 @@
     align-items: center;
     gap: 0.25rem;
     border: 1px solid #ffeaa7;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    z-index: 2;
 }
 
 /* Hotel Card Styles */
@@ -402,34 +417,48 @@
     .timeline-segment {
         flex-direction: column;
         gap: 1rem;
+        padding: 1rem 0;
     }
     
     .timeline-path {
-        width: 2px;
-        height: 40px;
+        width: 3px;
+        height: 60px;
         margin: 0.5rem 0;
         flex: none;
+        justify-content: flex-start;
+        align-items: flex-start;
     }
     
     .flight-line {
-        width: 2px;
+        width: 3px;
         height: 100%;
         background: linear-gradient(to bottom, #0176d3, #1a73e8);
     }
     
-    .flight-line::before {
-        bottom: -5px;
-        right: -3px;
+    .flight-line::after {
+        bottom: -6px;
+        right: 50%;
         top: auto;
+        transform: translateX(50%);
         border-left: 4px solid transparent;
         border-right: 4px solid transparent;
         border-top: 8px solid #1a73e8;
+        border-bottom: none;
     }
     
     .airline-info {
-        right: 1rem;
-        top: 50%;
+        right: 1.5rem;
+        top: 30%;
         transform: translateY(-50%);
+        left: auto;
+    }
+    
+    .connection-indicator {
+        right: 1rem;
+        left: auto;
+        bottom: auto;
+        top: 80%;
+        transform: none;
     }
     
     .hotel-header {
@@ -444,6 +473,15 @@
     .flight-timeline {
         gap: 0.5rem;
     }
+    
+    .timeline-point {
+        min-width: 80px;
+    }
+    
+    .location-code {
+        font-size: 1rem;
+        padding: 0.375rem;
+    }
 }
 
 /* Loading and Empty States */
@@ -451,10 +489,23 @@
     background: rgba(255, 255, 255, 0.8);
 }
 
+/* Improved focus states for accessibility */
+.suggestion-item:focus {
+    outline: 2px solid #0176d3;
+    outline-offset: -2px;
+    background-color: #f0f8ff;
+}
+
+.search-tabs .slds-tabs_default__link:focus {
+    outline: 2px solid #0176d3;
+    outline-offset: -2px;
+}
+
 /* Selection States */
 .result-card.selected {
     border-color: #0176d3;
     background: #f0f8ff;
+    position: relative;
 }
 
 .result-card.selected::before {
@@ -466,4 +517,13 @@
     height: 100%;
     background: #0176d3;
     border-radius: 0.75rem 0 0 0.75rem;
+}
+
+/* Hide tab content that's not active */
+.slds-tabs_default__content {
+    display: none;
+}
+
+.slds-tabs_default__content.slds-show {
+    display: block;
 }

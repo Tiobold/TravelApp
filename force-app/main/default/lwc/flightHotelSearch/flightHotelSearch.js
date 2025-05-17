@@ -34,11 +34,11 @@ export default class FlightHotelSearch extends LightningElement {
     @track hasSearched = false;
     @track error;
     
-    // Selected items and booking modal
+    // Selected items for booking
     @track selectedFlight = null;
     @track selectedHotel = null;
     @track showBookingModal = false;
-    @track bookingType = ''; // 'flight' or 'hotel'
+    @track bookingType = '';
     @track isBooking = false;
     
     // Manual city/airport mapping for better suggestions
@@ -55,29 +55,22 @@ export default class FlightHotelSearch extends LightningElement {
         ['lhr', { iataCode: 'LHR', name: 'Heathrow Airport', cityName: 'London', countryName: 'United Kingdom' }],
         ['vienna', { iataCode: 'VIE', name: 'Vienna International Airport', cityName: 'Vienna', countryName: 'Austria' }],
         ['vie', { iataCode: 'VIE', name: 'Vienna International Airport', cityName: 'Vienna', countryName: 'Austria' }],
-        ['prague', { iataCode: 'PRG', name: 'Václav Havel Airport Prague', cityName: 'Prague', countryName: 'Czech Republic' }],
-        ['prg', { iataCode: 'PRG', name: 'Václav Havel Airport Prague', cityName: 'Prague', countryName: 'Czech Republic' }],
         ['rome', { iataCode: 'FCO', name: 'Leonardo da Vinci Airport', cityName: 'Rome', countryName: 'Italy' }],
-        ['fco', { iataCode: 'FCO', name: 'Leonardo da Vinci Airport', cityName: 'Rome', countryName: 'Italy' }],
-        ['madrid', { iataCode: 'MAD', name: 'Adolfo Suárez Madrid-Barajas Airport', cityName: 'Madrid', countryName: 'Spain' }],
-        ['mad', { iataCode: 'MAD', name: 'Adolfo Suárez Madrid-Barajas Airport', cityName: 'Madrid', countryName: 'Spain' }],
-        ['berlin', { iataCode: 'BER', name: 'Berlin Brandenburg Airport', cityName: 'Berlin', countryName: 'Germany' }],
-        ['ber', { iataCode: 'BER', name: 'Berlin Brandenburg Airport', cityName: 'Berlin', countryName: 'Germany' }]
+        ['fco', { iataCode: 'FCO', name: 'Leonardo da Vinci Airport', cityName: 'Rome', countryName: 'Italy' }]
     ]);
     
+    // Getters
     get tabs() {
         return [
             { 
                 value: 'flights', 
-                label: 'Flights', 
-                icon: 'utility:airplane',
-                class: this.activeTab === 'flights' ? 'slds-is-active' : '' 
+                label: 'Flights',
+                class: this.activeTab === 'flights' ? 'slds-tabs_default__item slds-is-active' : 'slds-tabs_default__item'
             },
             { 
                 value: 'hotels', 
-                label: 'Hotels', 
-                icon: 'utility:home',
-                class: this.activeTab === 'hotels' ? 'slds-is-active' : '' 
+                label: 'Hotels',
+                class: this.activeTab === 'hotels' ? 'slds-tabs_default__item slds-is-active' : 'slds-tabs_default__item'
             }
         ];
     }
@@ -122,21 +115,50 @@ export default class FlightHotelSearch extends LightningElement {
         return this.searchData.checkInDate || this.minCheckInDate;
     }
     
-    get bookingTitle() {
-        return this.bookingType === 'flight' ? 'Book Flight' : 'Book Hotel';
+    // Event handlers
+    connectedCallback() {
+        // Set default values
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const weekFromTomorrow = new Date();
+        weekFromTomorrow.setDate(weekFromTomorrow.getDate() + 8);
+        
+        this.searchData.departureDate = tomorrow.toISOString().split('T')[0];
+        this.searchData.returnDate = weekFromTomorrow.toISOString().split('T')[0];
+        this.searchData.checkInDate = tomorrow.toISOString().split('T')[0];
+        weekFromTomorrow.setDate(weekFromTomorrow.getDate() + 3);
+        this.searchData.checkOutDate = weekFromTomorrow.toISOString().split('T')[0];
+        
+        // Add document click handler to close suggestions
+        document.addEventListener('click', this.handleDocumentClick.bind(this));
     }
     
-    get selectedItem() {
-        return this.bookingType === 'flight' ? this.selectedFlight : this.selectedHotel;
+    disconnectedCallback() {
+        // Remove document click handler
+        document.removeEventListener('click', this.handleDocumentClick.bind(this));
+    }
+    
+    handleDocumentClick(event) {
+        // Close suggestions if clicking outside the component
+        const component = this.template.querySelector('.flight-hotel-search');
+        if (component && !component.contains(event.target)) {
+            this.clearSuggestions('origin');
+            this.clearSuggestions('destination');
+        }
     }
     
     // Tab switching
     handleTabClick(event) {
-        this.activeTab = event.target.dataset.tab;
+        event.preventDefault();
+        const tabValue = event.currentTarget.dataset.tab;
+        console.log('Tab clicked:', tabValue);
+        this.activeTab = tabValue;
         this.clearSearchResults();
+        this.clearSuggestions('origin');
+        this.clearSuggestions('destination');
     }
     
-    // Input handlers with improved logic
+    // Input handlers
     handleOriginChange(event) {
         this.searchData.origin = event.target.value;
         this.searchLocationSuggestions(event.target.value, 'origin');
@@ -154,10 +176,6 @@ export default class FlightHotelSearch extends LightningElement {
             const departureDate = new Date(event.target.value);
             departureDate.setDate(departureDate.getDate() + 7);
             this.searchData.returnDate = departureDate.toISOString().split('T')[0];
-        }
-        // Auto-set check-in date for hotels
-        if (!this.searchData.checkInDate) {
-            this.searchData.checkInDate = event.target.value;
         }
     }
     
@@ -183,7 +201,7 @@ export default class FlightHotelSearch extends LightningElement {
         this.searchData.adults = parseInt(event.detail.value);
     }
     
-    // Improved location suggestions with fallback
+    // Location suggestions
     async searchLocationSuggestions(keyword, type) {
         if (keyword.length < 2) {
             this.clearSuggestions(type);
@@ -199,14 +217,16 @@ export default class FlightHotelSearch extends LightningElement {
             
             // Combine manual and API suggestions, removing duplicates
             const allSuggestions = [...manualSuggestions];
-            apiSuggestions.forEach(apiSugg => {
-                if (!allSuggestions.find(manualSugg => manualSugg.iataCode === apiSugg.iataCode)) {
-                    allSuggestions.push(apiSugg);
-                }
-            });
+            if (apiSuggestions && Array.isArray(apiSuggestions)) {
+                apiSuggestions.forEach(apiSugg => {
+                    if (!allSuggestions.find(manualSugg => manualSugg.iataCode === apiSugg.iataCode)) {
+                        allSuggestions.push(apiSugg);
+                    }
+                });
+            }
             
             if (type === 'origin') {
-                this.originSuggestions = allSuggestions.slice(0, 8); // Limit to 8 suggestions
+                this.originSuggestions = allSuggestions.slice(0, 8);
                 this.showOriginSuggestions = this.originSuggestions.length > 0;
                 this.showDestinationSuggestions = false;
             } else {
@@ -227,7 +247,6 @@ export default class FlightHotelSearch extends LightningElement {
         }
     }
     
-    // Get manual suggestions from predefined mapping
     getManualSuggestions(keyword) {
         const suggestions = [];
         const searchTerm = keyword.toLowerCase();
@@ -261,21 +280,45 @@ export default class FlightHotelSearch extends LightningElement {
     }
     
     handleSuggestionClick(event) {
-        const suggestion = JSON.parse(event.target.dataset.suggestion);
-        const type = event.target.dataset.type;
+        event.stopPropagation();
+        
+        // Get the suggestion data from the element attributes
+        const suggestionElement = event.currentTarget;
+        const type = suggestionElement.dataset.type;
+        
+        // Find the clicked suggestion in our arrays
+        let suggestion;
+        if (type === 'origin') {
+            const iataCode = suggestionElement.querySelector('strong')?.textContent;
+            suggestion = this.originSuggestions.find(s => s.iataCode === iataCode);
+        } else {
+            const iataCode = suggestionElement.querySelector('strong')?.textContent;
+            suggestion = this.destinationSuggestions.find(s => s.iataCode === iataCode);
+        }
+        
+        if (!suggestion) {
+            console.error('No suggestion found');
+            return;
+        }
         
         if (type === 'origin') {
             this.searchData.origin = suggestion.iataCode;
             this.clearSuggestions('origin');
+            
+            // Update the input field value
+            const inputField = this.template.querySelector('lightning-input[data-field="origin"]');
+            if (inputField) {
+                inputField.value = `${suggestion.iataCode} - ${suggestion.cityName}`;
+            }
         } else {
             this.searchData.destination = suggestion.iataCode;
             this.clearSuggestions('destination');
-        }
-        
-        // Update the input field display
-        const inputField = this.template.querySelector(`lightning-input[data-field="${type}"]`);
-        if (inputField) {
-            inputField.value = `${suggestion.iataCode} - ${suggestion.cityName}`;
+            
+            // Update the input field value
+            const inputField = this.template.querySelector('lightning-input[data-field="destination"]');
+            if (inputField) {
+                inputField.value = `${suggestion.iataCode} - ${suggestion.cityName}`;
+            }
         }
     }
     
@@ -302,7 +345,12 @@ export default class FlightHotelSearch extends LightningElement {
                 adults: this.searchData.adults
             });
             
-            this.flightResults = this.processFlightResults(result.flights || []);
+            if (result && result.flights) {
+                this.flightResults = this.processFlightResults(result.flights);
+            } else {
+                this.flightResults = [];
+            }
+            
             this.hasSearched = true;
             
             if (this.flightResults.length === 0) {
@@ -337,7 +385,12 @@ export default class FlightHotelSearch extends LightningElement {
                 adults: this.searchData.adults
             });
             
-            this.hotelResults = result.hotels || [];
+            if (result && result.hotels) {
+                this.hotelResults = result.hotels;
+            } else {
+                this.hotelResults = [];
+            }
+            
             this.hasSearched = true;
             
             if (this.hotelResults.length === 0) {
@@ -352,7 +405,7 @@ export default class FlightHotelSearch extends LightningElement {
         }
     }
     
-    // Extract IATA code from input (handles "BUD - Budapest" format)
+    // Utility functions
     extractIataCode(input) {
         if (!input) return '';
         
@@ -365,20 +418,24 @@ export default class FlightHotelSearch extends LightningElement {
         return input.trim();
     }
     
-    // Process flight results to add formatted data
     processFlightResults(flights) {
+        if (!flights || !Array.isArray(flights)) {
+            return [];
+        }
+        
         return flights.map(flight => ({
             ...flight,
-            formattedPrice: flight.price,
-            itineraries: flight.itineraries.map(itinerary => ({
+            formattedPrice: flight.price || 'N/A',
+            itineraries: flight.itineraries ? flight.itineraries.map((itinerary, itineraryIndex) => ({
                 ...itinerary,
-                formattedDuration: this.formatDuration(itinerary.duration),
-                segments: itinerary.segments.map(segment => ({
+                duration: this.formatDuration(itinerary.duration || 'PT0H0M'),
+                segments: itinerary.segments ? itinerary.segments.map((segment, segmentIndex) => ({
                     ...segment,
-                    formattedDepartureTime: this.formatDateTime(segment.departureTime),
-                    formattedArrivalTime: this.formatDateTime(segment.arrivalTime)
-                }))
-            }))
+                    departureTime: this.formatDateTime(segment.departureTime),
+                    arrivalTime: this.formatDateTime(segment.arrivalTime),
+                    isLast: segmentIndex === itinerary.segments.length - 1 // Add flag for last segment
+                })) : []
+            })) : []
         }));
     }
     
@@ -449,11 +506,6 @@ export default class FlightHotelSearch extends LightningElement {
             // Simulate booking process
             await new Promise(resolve => setTimeout(resolve, 2000));
             
-            // In a real implementation, you would:
-            // 1. Create a booking record
-            // 2. Possibly redirect to payment
-            // 3. Save booking details to the Trip
-            
             this.showToast('Success', 
                 `${this.bookingType === 'flight' ? 'Flight' : 'Hotel'} booking confirmed! Details will be added to your trip.`, 
                 'success');
@@ -467,29 +519,39 @@ export default class FlightHotelSearch extends LightningElement {
         }
     }
     
-    // Utility functions
+    // Formatting functions
     formatDateTime(dateTimeString) {
         if (!dateTimeString) return '';
-        const date = new Date(dateTimeString);
-        return new Intl.DateTimeFormat('en-US', {
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-        }).format(date);
+        try {
+            const date = new Date(dateTimeString);
+            return new Intl.DateTimeFormat('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            }).format(date);
+        } catch (error) {
+            console.error('Error formatting date:', error);
+            return dateTimeString;
+        }
     }
     
     formatDuration(duration) {
         if (!duration) return '';
-        // Duration is in ISO 8601 format (PT1H30M)
-        const matches = duration.match(/PT(\d+H)?(\d+M)?/);
-        if (!matches) return duration;
-        
-        const hours = matches[1] ? parseInt(matches[1]) : 0;
-        const minutes = matches[2] ? parseInt(matches[2]) : 0;
-        
-        return `${hours}h ${minutes}m`;
+        try {
+            // Duration is in ISO 8601 format (PT1H30M)
+            const matches = duration.match(/PT(\d+H)?(\d+M)?/);
+            if (!matches) return duration;
+            
+            const hours = matches[1] ? parseInt(matches[1].replace('H', '')) : 0;
+            const minutes = matches[2] ? parseInt(matches[2].replace('M', '')) : 0;
+            
+            return `${hours}h ${minutes}m`;
+        } catch (error) {
+            console.error('Error formatting duration:', error);
+            return duration;
+        }
     }
     
     showToast(title, message, variant) {

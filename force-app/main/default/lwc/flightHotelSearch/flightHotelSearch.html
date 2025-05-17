@@ -4,8 +4,11 @@
         <div class="slds-tabs_default search-tabs">
             <ul class="slds-tabs_default__nav" role="tablist">
                 <template for:each={tabs} for:item="tab">
-                    <li key={tab.value} class={tab.class} data-tab={tab.value} onclick={handleTabClick}>
-                        <a class="slds-tabs_default__link" role="tab">
+                    <li key={tab.value} class={tab.class} role="presentation">
+                        <a class="slds-tabs_default__link" 
+                           role="tab" 
+                           data-tab={tab.value}
+                           onclick={handleTabClick}>
                             {tab.label}
                         </a>
                     </li>
@@ -35,12 +38,16 @@
                                     <template for:each={originSuggestions} for:item="suggestion">
                                         <div key={suggestion.iataCode} 
                                              class="suggestion-item"
-                                             data-suggestion={suggestion}
                                              data-type="origin"
                                              onclick={handleSuggestionClick}>
-                                            <strong>{suggestion.iataCode}</strong> - {suggestion.name}
-                                            <br/>
-                                            <small>{suggestion.cityName}, {suggestion.countryName}</small>
+                                            <div class="suggestion-content">
+                                                <div class="suggestion-main">
+                                                    <strong>{suggestion.iataCode}</strong> - {suggestion.name}
+                                                </div>
+                                                <div class="suggestion-sub">
+                                                    {suggestion.cityName}, {suggestion.countryName}
+                                                </div>
+                                            </div>
                                         </div>
                                     </template>
                                 </div>
@@ -65,12 +72,16 @@
                                     <template for:each={destinationSuggestions} for:item="suggestion">
                                         <div key={suggestion.iataCode} 
                                              class="suggestion-item"
-                                             data-suggestion={suggestion}
                                              data-type="destination"
                                              onclick={handleSuggestionClick}>
-                                            <strong>{suggestion.iataCode}</strong> - {suggestion.name}
-                                            <br/>
-                                            <small>{suggestion.cityName}, {suggestion.countryName}</small>
+                                            <div class="suggestion-content">
+                                                <div class="suggestion-main">
+                                                    <strong>{suggestion.iataCode}</strong> - {suggestion.name}
+                                                </div>
+                                                <div class="suggestion-sub">
+                                                    {suggestion.cityName}, {suggestion.countryName}
+                                                </div>
+                                            </div>
                                         </div>
                                     </template>
                                 </div>
@@ -137,7 +148,10 @@
                         <template for:each={flightResults} for:item="flight">
                             <div key={flight.id} class="result-card flight-card">
                                 <div class="flight-header">
-                                    <div class="flight-price">{flight.price}</div>
+                                    <div class="flight-price-container">
+                                        <div class="flight-price">{flight.formattedPrice}</div>
+                                        <div class="price-per-person">per person</div>
+                                    </div>
                                     <lightning-button 
                                         variant="brand"
                                         label="Select"
@@ -147,31 +161,64 @@
                                 </div>
                                 
                                 <!-- Flight Itineraries -->
-                                <template for:each={flight.itineraries} for:item="itinerary">
+                                <template for:each={flight.itineraries} for:item="itinerary" for:index="itineraryIndex">
                                     <div key={itinerary} class="itinerary">
                                         <div class="itinerary-header">
-                                            <span class="duration">Duration: {itinerary.duration}</span>
+                                            <div class="itinerary-type">
+                                                <lightning-icon icon-name="utility:date_time" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                                <template if:true={itineraryIndex}>
+                                                    Return Flight
+                                                </template>
+                                                <template if:false={itineraryIndex}>
+                                                    Outbound Flight
+                                                </template>
+                                            </div>
+                                            <div class="duration-badge">
+                                                <lightning-icon icon-name="utility:clock" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                                {itinerary.duration}
+                                            </div>
                                         </div>
                                         
-                                        <!-- Flight Segments -->
-                                        <template for:each={itinerary.segments} for:item="segment">
-                                            <div key={segment} class="flight-segment">
-                                                <div class="segment-info">
-                                                    <div class="departure">
-                                                        <div class="airport-code">{segment.departureCode}</div>
-                                                        <div class="time">{segment.departureTime}</div>
+                                        <!-- Flight Timeline -->
+                                        <div class="flight-timeline">
+                                            <template for:each={itinerary.segments} for:item="segment" for:index="segmentIndex">
+                                                <div key={segment} class="timeline-segment">
+                                                    <!-- Departure -->
+                                                    <div class="timeline-point">
+                                                        <div class="timeline-time">{segment.departureTime}</div>
+                                                        <div class="timeline-location">
+                                                            <div class="location-code">{segment.departureCode}</div>
+                                                        </div>
                                                     </div>
-                                                    <div class="flight-arrow">
-                                                        <lightning-icon icon-name="utility:forward" size="small"></lightning-icon>
-                                                        <div class="carrier">{segment.carrierCode}</div>
+                                                    
+                                                    <!-- Flight Path -->
+                                                    <div class="timeline-path">
+                                                        <div class="flight-line">
+                                                            <div class="airline-info">
+                                                                <lightning-icon icon-name="utility:socialshare" size="x-small"></lightning-icon>
+                                                                {segment.carrierCode}
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <!-- Connection indicator for multi-segment flights -->
+                                                        <template if:false={segment.isLast}>
+                                                            <div class="connection-indicator">
+                                                                <lightning-icon icon-name="utility:refresh" size="x-small"></lightning-icon>
+                                                                Connection
+                                                            </div>
+                                                        </template>
                                                     </div>
-                                                    <div class="arrival">
-                                                        <div class="airport-code">{segment.arrivalCode}</div>
-                                                        <div class="time">{segment.arrivalTime}</div>
+                                                    
+                                                    <!-- Arrival -->
+                                                    <div class="timeline-point">
+                                                        <div class="timeline-time">{segment.arrivalTime}</div>
+                                                        <div class="timeline-location">
+                                                            <div class="location-code">{segment.arrivalCode}</div>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </template>
+                                            </template>
+                                        </div>
                                     </div>
                                 </template>
                             </div>
@@ -216,12 +263,16 @@
                                     <template for:each={destinationSuggestions} for:item="suggestion">
                                         <div key={suggestion.iataCode} 
                                              class="suggestion-item"
-                                             data-suggestion={suggestion}
                                              data-type="destination"
                                              onclick={handleSuggestionClick}>
-                                            <strong>{suggestion.iataCode}</strong> - {suggestion.name}
-                                            <br/>
-                                            <small>{suggestion.cityName}, {suggestion.countryName}</small>
+                                            <div class="suggestion-content">
+                                                <div class="suggestion-main">
+                                                    <strong>{suggestion.iataCode}</strong> - {suggestion.name}
+                                                </div>
+                                                <div class="suggestion-sub">
+                                                    {suggestion.cityName}, {suggestion.countryName}
+                                                </div>
+                                            </div>
                                         </div>
                                     </template>
                                 </div>
@@ -292,9 +343,15 @@
                                     <div class="hotel-info">
                                         <h4 class="hotel-name">{hotel.name}</h4>
                                         <template if:true={hotel.chainCode}>
-                                            <div class="hotel-chain">{hotel.chainCode}</div>
+                                            <div class="hotel-chain">
+                                                <lightning-icon icon-name="utility:company" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                                {hotel.chainCode}
+                                            </div>
                                         </template>
-                                        <div class="hotel-address">{hotel.address}</div>
+                                        <div class="hotel-address">
+                                            <lightning-icon icon-name="utility:location" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                            {hotel.address}
+                                        </div>
                                     </div>
                                     <lightning-button 
                                         variant="brand"
@@ -334,6 +391,107 @@
                     <p class="slds-m-top_small">{error}</p>
                 </div>
             </div>
+        </template>
+        
+        <!-- Booking Modal -->
+        <template if:true={showBookingModal}>
+            <section role="dialog" tabindex="-1" aria-modal="true" aria-labelledby="booking-modal-heading" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <lightning-button-icon 
+                            icon-name="utility:close" 
+                            class="slds-modal__close" 
+                            onclick={handleCloseBookingModal} 
+                            alternative-text="Close" 
+                            title="Close">
+                        </lightning-button-icon>
+                        <h2 id="booking-modal-heading" class="slds-modal__title slds-hyphenate">
+                            Confirm Booking
+                        </h2>
+                    </header>
+                    
+                    <div class="slds-modal__content slds-p-around_medium" id="booking-modal-content">
+                        <div class="booking-details">
+                            <template if:true={selectedFlight}>
+                                <h3 class="slds-text-heading_small slds-m-bottom_medium">Flight Details</h3>
+                                <div class="booking-summary">
+                                    <div class="summary-item">
+                                        <span class="summary-label">Price:</span>
+                                        <span class="summary-value">{selectedFlight.formattedPrice}</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label">Route:</span>
+                                        <span class="summary-value">{searchData.origin} → {searchData.destination}</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label">Departure:</span>
+                                        <span class="summary-value">{searchData.departureDate}</span>
+                                    </div>
+                                    <template if:true={searchData.returnDate}>
+                                        <div class="summary-item">
+                                            <span class="summary-label">Return:</span>
+                                            <span class="summary-value">{searchData.returnDate}</span>
+                                        </div>
+                                    </template>
+                                    <div class="summary-item">
+                                        <span class="summary-label">Passengers:</span>
+                                        <span class="summary-value">{searchData.adults} adult(s)</span>
+                                    </div>
+                                </div>
+                            </template>
+                            
+                            <template if:true={selectedHotel}>
+                                <h3 class="slds-text-heading_small slds-m-bottom_medium">Hotel Details</h3>
+                                <div class="booking-summary">
+                                    <div class="summary-item">
+                                        <span class="summary-label">Hotel:</span>
+                                        <span class="summary-value">{selectedHotel.name}</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label">Address:</span>
+                                        <span class="summary-value">{selectedHotel.address}</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label">Check-in:</span>
+                                        <span class="summary-value">{searchData.checkInDate}</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label">Check-out:</span>
+                                        <span class="summary-value">{searchData.checkOutDate}</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-label">Guests:</span>
+                                        <span class="summary-value">{searchData.adults} adult(s)</span>
+                                    </div>
+                                </div>
+                            </template>
+                            
+                            <div class="booking-note slds-m-top_medium">
+                                <lightning-icon icon-name="utility:info" size="small" class="slds-m-right_x-small"></lightning-icon>
+                                This will save the booking details to your trip record. You may be redirected to complete payment.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <footer class="slds-modal__footer">
+                        <lightning-button 
+                            label="Cancel" 
+                            onclick={handleCloseBookingModal} 
+                            class="slds-m-right_x-small">
+                        </lightning-button>
+                        <lightning-button 
+                            variant="brand" 
+                            label="Confirm Booking" 
+                            onclick={handleConfirmBooking}
+                            disabled={isBooking}>
+                        </lightning-button>
+                        <template if:true={isBooking}>
+                            <lightning-spinner size="small" alternative-text="Processing booking..."></lightning-spinner>
+                        </template>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
         </template>
     </lightning-card>
 </template>
