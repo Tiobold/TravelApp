@@ -1,4 +1,4 @@
-// Updated AmadeusService.cls with Custom Settings
+// Complete fixed AmadeusService.cls
 public with sharing class AmadeusService {
     // Use Custom Settings for better security
     private static Amadeus_API__c getAmadeusSettings() {
@@ -183,6 +183,39 @@ public with sharing class AmadeusService {
         }
     }
     
+    /**
+     * Get flight destination inspiration from a given origin
+     * @param origin Origin airport code (e.g., 'BUD')
+     * @param maxPrice Maximum price filter
+     * @param departureDate Departure date in YYYY-MM-DD format (optional)
+     * @return FlightInspirationResult with list of affordable destinations
+     */
+    @AuraEnabled
+    public static FlightInspirationResult getFlightInspiration(String origin, Integer maxPrice, String departureDate) {
+        try {
+            Map<String, String> parameters = new Map<String, String>();
+            parameters.put('origin', origin);
+            parameters.put('maxPrice', String.valueOf(maxPrice != null ? maxPrice : 200));
+            
+            if (String.isNotBlank(departureDate)) {
+                parameters.put('departureDate', departureDate);
+            }
+            
+            // Use flight inspiration endpoint
+            HttpResponse response = makeApiCall('/v1/shopping/flight-destinations', parameters);
+            
+            if (response.getStatusCode() == 200) {
+                Map<String, Object> responseBody = (Map<String, Object>) JSON.deserializeUntyped(response.getBody());
+                return parseFlightInspirationResults(responseBody);
+            } else {
+                throw new AmadeusException('Flight inspiration search failed: ' + response.getStatusCode() + ' - ' + response.getBody());
+            }
+        } catch (Exception e) {
+            System.debug('Exception in getFlightInspiration: ' + e.getMessage());
+            throw new AuraHandledException('Error getting flight inspiration: ' + e.getMessage());
+        }
+    }
+    
     // Parse flight search results
     private static FlightSearchResult parseFlightResults(Map<String, Object> responseBody) {
         FlightSearchResult result = new FlightSearchResult();
@@ -212,7 +245,7 @@ public with sharing class AmadeusService {
         
         List<Object> data = (List<Object>) responseBody.get('data');
         if (data != null) {
-            // FIX 1: Properly handle list slicing for limiting results
+            // Properly handle list slicing for limiting results
             Integer maxResults = Math.min(data.size(), 20);
             for (Integer i = 0; i < maxResults; i++) {
                 Map<String, Object> hotel = (Map<String, Object>) data[i];
@@ -273,16 +306,65 @@ public with sharing class AmadeusService {
         return suggestions;
     }
     
+    /**
+     * Parse flight inspiration results
+     */
+    private static FlightInspirationResult parseFlightInspirationResults(Map<String, Object> responseBody) {
+        FlightInspirationResult result = new FlightInspirationResult();
+        result.destinations = new List<FlightDestination>();
+        
+        List<Object> data = (List<Object>) responseBody.get('data');
+        if (data != null) {
+            for (Object item : data) {
+                Map<String, Object> destData = (Map<String, Object>) item;
+                FlightDestination destination = new FlightDestination();
+                
+                destination.type = (String) destData.get('type');
+                destination.origin = (String) destData.get('origin');
+                destination.destination = (String) destData.get('destination');
+                destination.departureDate = (String) destData.get('departureDate');
+                destination.returnDate = (String) destData.get('returnDate');
+                
+                // Parse price
+                Map<String, Object> price = (Map<String, Object>) destData.get('price');
+                if (price != null) {
+                    destination.price = parseFlightPrice(price);
+                }
+                
+                // Parse links for additional info
+                Map<String, Object> links = (Map<String, Object>) destData.get('links');
+                if (links != null) {
+                    destination.flightOffersLink = (String) links.get('flightOffers');
+                }
+                
+                result.destinations.add(destination);
+            }
+        }
+        
+        return result;
+    }
+    
     // Helper methods
     private static String parsePrice(Map<String, Object> offer) {
         Map<String, Object> price = (Map<String, Object>) offer.get('price');
         if (price != null) {
             String total = (String) price.get('total');
-            // FIX 2: Use 'currencyCode' instead of reserved keyword 'currency'
+            // Use 'currencyCode' instead of reserved keyword 'currency'
             String currencyCode = (String) price.get('currency');
             return currencyCode + ' ' + total;
         }
         return '';
+    }
+    
+    /**
+     * Parse flight price from inspiration API - FIXED
+     */
+    private static FlightPrice parseFlightPrice(Map<String, Object> priceData) {
+        FlightPrice price = new FlightPrice();
+        price.total = (String) priceData.get('total');
+        // FIX: Use 'currencyCode' instead of reserved keyword 'currency'
+        price.currencyCode = (String) priceData.get('currency');
+        return price;
     }
     
     private static List<FlightItinerary> parseItineraries(Map<String, Object> offer) {
@@ -378,6 +460,26 @@ public with sharing class AmadeusService {
         @AuraEnabled public String subType;
         @AuraEnabled public String cityName;
         @AuraEnabled public String countryName;
+    }
+    
+    // Flight inspiration wrapper classes
+    public class FlightInspirationResult {
+        @AuraEnabled public List<FlightDestination> destinations;
+    }
+    
+    public class FlightDestination {
+        @AuraEnabled public String type;
+        @AuraEnabled public String origin;
+        @AuraEnabled public String destination;
+        @AuraEnabled public String departureDate;
+        @AuraEnabled public String returnDate;
+        @AuraEnabled public FlightPrice price;
+        @AuraEnabled public String flightOffersLink;
+    }
+    
+    public class FlightPrice {
+        @AuraEnabled public String total;
+        @AuraEnabled public String currencyCode; // FIXED: Changed from 'currency' to 'currencyCode'
     }
     
     // Custom exception class

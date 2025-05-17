@@ -1,0 +1,339 @@
+<template>
+    <lightning-card title="Flights & Hotels" icon-name="standard:travel_mode" class="flight-hotel-search">
+        <!-- Tab Navigation -->
+        <div class="slds-tabs_default search-tabs">
+            <ul class="slds-tabs_default__nav" role="tablist">
+                <template for:each={tabs} for:item="tab">
+                    <li key={tab.value} class={tab.class} data-tab={tab.value} onclick={handleTabClick}>
+                        <a class="slds-tabs_default__link" role="tab">
+                            {tab.label}
+                        </a>
+                    </li>
+                </template>
+            </ul>
+            
+            <!-- Flights Tab Content -->
+            <div class="slds-tabs_default__content slds-show" if:true={isFlightsTab}>
+                <div class="search-form">
+                    <!-- Flight Search Form -->
+                    <div class="slds-grid slds-gutters slds-wrap">
+                        <!-- Origin -->
+                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4 location-field">
+                            <lightning-input 
+                                type="text"
+                                label="From"
+                                placeholder="Enter city or airport"
+                                value={searchData.origin}
+                                onchange={handleOriginChange}
+                                data-field="origin"
+                                required>
+                            </lightning-input>
+                            
+                            <!-- Origin Suggestions -->
+                            <template if:true={showOriginSuggestions}>
+                                <div class="suggestions-dropdown">
+                                    <template for:each={originSuggestions} for:item="suggestion">
+                                        <div key={suggestion.iataCode} 
+                                             class="suggestion-item"
+                                             data-suggestion={suggestion}
+                                             data-type="origin"
+                                             onclick={handleSuggestionClick}>
+                                            <strong>{suggestion.iataCode}</strong> - {suggestion.name}
+                                            <br/>
+                                            <small>{suggestion.cityName}, {suggestion.countryName}</small>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                        
+                        <!-- Destination -->
+                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4 location-field">
+                            <lightning-input 
+                                type="text"
+                                label="To"
+                                placeholder="Enter city or airport"
+                                value={searchData.destination}
+                                onchange={handleDestinationChange}
+                                data-field="destination"
+                                required>
+                            </lightning-input>
+                            
+                            <!-- Destination Suggestions -->
+                            <template if:true={showDestinationSuggestions}>
+                                <div class="suggestions-dropdown">
+                                    <template for:each={destinationSuggestions} for:item="suggestion">
+                                        <div key={suggestion.iataCode} 
+                                             class="suggestion-item"
+                                             data-suggestion={suggestion}
+                                             data-type="destination"
+                                             onclick={handleSuggestionClick}>
+                                            <strong>{suggestion.iataCode}</strong> - {suggestion.name}
+                                            <br/>
+                                            <small>{suggestion.cityName}, {suggestion.countryName}</small>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                        
+                        <!-- Departure Date -->
+                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4">
+                            <lightning-input 
+                                type="date"
+                                label="Departure"
+                                value={searchData.departureDate}
+                                min={minDepartureDate}
+                                onchange={handleDepartureDateChange}
+                                required>
+                            </lightning-input>
+                        </div>
+                        
+                        <!-- Return Date -->
+                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4">
+                            <lightning-input 
+                                type="date"
+                                label="Return (Optional)"
+                                value={searchData.returnDate}
+                                min={minReturnDate}
+                                onchange={handleReturnDateChange}>
+                            </lightning-input>
+                        </div>
+                        
+                        <!-- Adults -->
+                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4">
+                            <lightning-combobox
+                                label="Adults"
+                                value={searchData.adults}
+                                options={adultOptions}
+                                onchange={handleAdultsChange}>
+                            </lightning-combobox>
+                        </div>
+                        
+                        <!-- Search Button -->
+                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4 search-button-col">
+                            <lightning-button 
+                                variant="brand"
+                                label="Search Flights"
+                                onclick={handleFlightSearch}
+                                disabled={isSearching}
+                                class="search-button">
+                            </lightning-button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Loading Spinner -->
+                <template if:true={isSearching}>
+                    <div class="slds-p-around_medium">
+                        <lightning-spinner alternative-text="Searching flights..." size="medium"></lightning-spinner>
+                    </div>
+                </template>
+                
+                <!-- Flight Results -->
+                <template if:true={hasFlightResults}>
+                    <div class="search-results">
+                        <h3 class="slds-text-heading_small slds-p-bottom_small">Flight Results</h3>
+                        <template for:each={flightResults} for:item="flight">
+                            <div key={flight.id} class="result-card flight-card">
+                                <div class="flight-header">
+                                    <div class="flight-price">{flight.price}</div>
+                                    <lightning-button 
+                                        variant="brand"
+                                        label="Select"
+                                        data-flight-id={flight.id}
+                                        onclick={handleFlightSelect}>
+                                    </lightning-button>
+                                </div>
+                                
+                                <!-- Flight Itineraries -->
+                                <template for:each={flight.itineraries} for:item="itinerary">
+                                    <div key={itinerary} class="itinerary">
+                                        <div class="itinerary-header">
+                                            <span class="duration">Duration: {itinerary.duration}</span>
+                                        </div>
+                                        
+                                        <!-- Flight Segments -->
+                                        <template for:each={itinerary.segments} for:item="segment">
+                                            <div key={segment} class="flight-segment">
+                                                <div class="segment-info">
+                                                    <div class="departure">
+                                                        <div class="airport-code">{segment.departureCode}</div>
+                                                        <div class="time">{segment.departureTime}</div>
+                                                    </div>
+                                                    <div class="flight-arrow">
+                                                        <lightning-icon icon-name="utility:forward" size="small"></lightning-icon>
+                                                        <div class="carrier">{segment.carrierCode}</div>
+                                                    </div>
+                                                    <div class="arrival">
+                                                        <div class="airport-code">{segment.arrivalCode}</div>
+                                                        <div class="time">{segment.arrivalTime}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+                
+                <!-- No Flight Results -->
+                <template if:true={hasSearched}>
+                    <template if:false={hasFlightResults}>
+                        <template if:false={isSearching}>
+                            <div class="slds-p-around_medium slds-text-align_center">
+                                <lightning-icon icon-name="utility:search" size="large" class="slds-m-bottom_small"></lightning-icon>
+                                <h3 class="slds-text-heading_small">No flights found</h3>
+                                <p>Try adjusting your search criteria and search again.</p>
+                            </div>
+                        </template>
+                    </template>
+                </template>
+            </div>
+            
+            <!-- Hotels Tab Content -->
+            <div class="slds-tabs_default__content slds-show" if:true={isHotelsTab}>
+                <div class="search-form">
+                    <!-- Hotel Search Form -->
+                    <div class="slds-grid slds-gutters slds-wrap">
+                        <!-- Destination -->
+                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 location-field">
+                            <lightning-input 
+                                type="text"
+                                label="Destination"
+                                placeholder="Enter city"
+                                value={searchData.destination}
+                                onchange={handleDestinationChange}
+                                data-field="destination"
+                                required>
+                            </lightning-input>
+                            
+                            <!-- Destination Suggestions -->
+                            <template if:true={showDestinationSuggestions}>
+                                <div class="suggestions-dropdown">
+                                    <template for:each={destinationSuggestions} for:item="suggestion">
+                                        <div key={suggestion.iataCode} 
+                                             class="suggestion-item"
+                                             data-suggestion={suggestion}
+                                             data-type="destination"
+                                             onclick={handleSuggestionClick}>
+                                            <strong>{suggestion.iataCode}</strong> - {suggestion.name}
+                                            <br/>
+                                            <small>{suggestion.cityName}, {suggestion.countryName}</small>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                        
+                        <!-- Check-in Date -->
+                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4">
+                            <lightning-input 
+                                type="date"
+                                label="Check-in"
+                                value={searchData.checkInDate}
+                                min={minCheckInDate}
+                                onchange={handleCheckInDateChange}
+                                required>
+                            </lightning-input>
+                        </div>
+                        
+                        <!-- Check-out Date -->
+                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4">
+                            <lightning-input 
+                                type="date"
+                                label="Check-out"
+                                value={searchData.checkOutDate}
+                                min={minCheckOutDate}
+                                onchange={handleCheckOutDateChange}
+                                required>
+                            </lightning-input>
+                        </div>
+                        
+                        <!-- Adults -->
+                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4">
+                            <lightning-combobox
+                                label="Adults"
+                                value={searchData.adults}
+                                options={adultOptions}
+                                onchange={handleAdultsChange}>
+                            </lightning-combobox>
+                        </div>
+                        
+                        <!-- Search Button -->
+                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4 search-button-col">
+                            <lightning-button 
+                                variant="brand"
+                                label="Search Hotels"
+                                onclick={handleHotelSearch}
+                                disabled={isSearching}
+                                class="search-button">
+                            </lightning-button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Loading Spinner -->
+                <template if:true={isSearching}>
+                    <div class="slds-p-around_medium">
+                        <lightning-spinner alternative-text="Searching hotels..." size="medium"></lightning-spinner>
+                    </div>
+                </template>
+                
+                <!-- Hotel Results -->
+                <template if:true={hasHotelResults}>
+                    <div class="search-results">
+                        <h3 class="slds-text-heading_small slds-p-bottom_small">Hotel Results</h3>
+                        <template for:each={hotelResults} for:item="hotel">
+                            <div key={hotel.id} class="result-card hotel-card">
+                                <div class="hotel-header">
+                                    <div class="hotel-info">
+                                        <h4 class="hotel-name">{hotel.name}</h4>
+                                        <template if:true={hotel.chainCode}>
+                                            <div class="hotel-chain">{hotel.chainCode}</div>
+                                        </template>
+                                        <div class="hotel-address">{hotel.address}</div>
+                                    </div>
+                                    <lightning-button 
+                                        variant="brand"
+                                        label="Select"
+                                        data-hotel-id={hotel.id}
+                                        onclick={handleHotelSelect}>
+                                    </lightning-button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+                
+                <!-- No Hotel Results -->
+                <template if:true={hasSearched}>
+                    <template if:false={hasHotelResults}>
+                        <template if:false={isSearching}>
+                            <div class="slds-p-around_medium slds-text-align_center">
+                                <lightning-icon icon-name="utility:search" size="large" class="slds-m-bottom_small"></lightning-icon>
+                                <h3 class="slds-text-heading_small">No hotels found</h3>
+                                <p>Try adjusting your search criteria and search again.</p>
+                            </div>
+                        </template>
+                    </template>
+                </template>
+            </div>
+        </div>
+        
+        <!-- Error Display -->
+        <template if:true={error}>
+            <div class="slds-p-around_medium">
+                <div class="slds-box slds-theme_error">
+                    <h3 class="slds-text-heading_small">
+                        <lightning-icon icon-name="utility:error" size="small" variant="inverse"></lightning-icon>
+                        Error
+                    </h3>
+                    <p class="slds-m-top_small">{error}</p>
+                </div>
+            </div>
+        </template>
+    </lightning-card>
+</template>
