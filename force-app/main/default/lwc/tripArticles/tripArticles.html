@@ -1,5 +1,5 @@
 <template>
-    <lightning-card title="TripAdvisor Destination Guide" icon-name="standard:travel_mode">
+    <lightning-card title={displayTitle} icon-name="standard:travel_mode">
         <div slot="actions">
             <lightning-button-icon 
                 icon-name="utility:refresh" 
@@ -22,27 +22,27 @@
                 </div>
             </template>
             
-            <!-- Location Details View -->
+            <!-- Activity Details View -->
             <template if:true={showDetails}>
-                <!-- Location Header -->
-                <div class="location-header">
-                    <div class="location-header-content">
+                <!-- Activity Header -->
+                <div class="activity-header">
+                    <div class="activity-header-content">
                         <div class="slds-grid slds-grid_align-spread">
                             <div class="slds-col">
-                                <h2 class="location-name">{locationDetails.name}</h2>
-                                <div class="location-type">{selectedLocation.type}</div>
+                                <h2 class="activity-name">{selectedActivity.name}</h2>
+                                <div class="activity-category">{selectedActivity.category}</div>
                             </div>
                             <div class="slds-col slds-text-align_right">
-                                <template if:true={locationDetails.rating}>
-                                    <div class="location-rating">
-                                        <span class="rating-value">{locationDetails.rating}/5</span>
+                                <template if:true={selectedActivity.rating}>
+                                    <div class="activity-rating">
+                                        <span class="rating-value">{selectedActivity.rating}/5</span>
                                         <div class="rating-stars">
                                             <template for:each={formattedRating} for:item="star">
                                                 <span key={star.index} class={star.class}>★</span>
                                             </template>
                                         </div>
                                         <div class="slds-text-body_small">
-                                            Based on {locationDetails.numReviews} reviews
+                                            Based on {selectedActivity.reviewCount} reviews
                                         </div>
                                     </div>
                                 </template>
@@ -51,11 +51,11 @@
                     </div>
                     
                     <!-- Back to Results Button (if multiple results) -->
-                    <template if:true={hasSearchResults}>
+                    <template if:true={hasActivities}>
                         <div class="back-button slds-m-top_small">
                             <lightning-button 
                                 variant="neutral" 
-                                label="View All Results" 
+                                label="View All Activities" 
                                 icon-name="utility:chevronleft" 
                                 onclick={handleBackToResults}>
                             </lightning-button>
@@ -63,47 +63,54 @@
                     </template>
                 </div>
                 
-                <!-- Location Description -->
-                <template if:true={locationDetails.description}>
-                    <div class="location-description slds-m-top_medium">
-                        <div class="slds-text-heading_small slds-m-bottom_small">About</div>
-                        <p>{locationDetails.description}</p>
+                <!-- Activity Image -->
+                <template if:true={hasImages}>
+                    <div class="activity-image slds-m-top_medium">
+                        <img src={primaryImage} alt={selectedActivity.name} class="activity-photo"/>
                     </div>
                 </template>
                 
-                <!-- Location Details -->
-                <div class="location-details slds-m-top_medium">
+                <!-- Activity Description -->
+                <template if:true={selectedActivity.description}>
+                    <div class="activity-description slds-m-top_medium">
+                        <div class="slds-text-heading_small slds-m-bottom_small">About This Experience</div>
+                        <p>{selectedActivity.description}</p>
+                    </div>
+                </template>
+                
+                <!-- Activity Details -->
+                <div class="activity-details slds-m-top_medium">
                     <div class="slds-grid slds-gutters">
                         <div class="slds-col slds-size_1-of-2">
-                            <template if:true={locationDetails.address}>
+                            <template if:true={selectedActivity.priceAmount}>
                                 <div class="detail-item">
                                     <div class="detail-label">
-                                        <lightning-icon icon-name="utility:location" size="x-small" class="slds-m-right_x-small"></lightning-icon>
-                                        Address
+                                        <lightning-icon icon-name="utility:moneybag" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                        Price
                                     </div>
-                                    <div class="detail-value">{locationDetails.address}</div>
+                                    <div class="detail-value price-value">{priceDisplay}</div>
+                                </div>
+                            </template>
+                            
+                            <template if:true={selectedActivity.category}>
+                                <div class="detail-item">
+                                    <div class="detail-label">
+                                        <lightning-icon icon-name="utility:bookmark" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                        Category
+                                    </div>
+                                    <div class="detail-value">{selectedActivity.category}</div>
                                 </div>
                             </template>
                         </div>
                         <div class="slds-col slds-size_1-of-2">
-                            <template if:true={locationDetails.phone}>
+                            <template if:true={selectedActivity.latitude}>
                                 <div class="detail-item">
                                     <div class="detail-label">
-                                        <lightning-icon icon-name="utility:call" size="x-small" class="slds-m-right_x-small"></lightning-icon>
-                                        Phone
-                                    </div>
-                                    <div class="detail-value">{locationDetails.phone}</div>
-                                </div>
-                            </template>
-                            
-                            <template if:true={locationDetails.website}>
-                                <div class="detail-item">
-                                    <div class="detail-label">
-                                        <lightning-icon icon-name="utility:link" size="x-small" class="slds-m-right_x-small"></lightning-icon>
-                                        Website
+                                        <lightning-icon icon-name="utility:location" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                        Location
                                     </div>
                                     <div class="detail-value">
-                                        <a href={locationDetails.website} target="_blank">{locationDetails.website}</a>
+                                        {selectedActivity.latitude}, {selectedActivity.longitude}
                                     </div>
                                 </div>
                             </template>
@@ -111,48 +118,51 @@
                     </div>
                 </div>
                 
-                <!-- TripAdvisor Link -->
-                <div class="tripadvisor-link slds-m-top_medium">
-                    <a href={locationDetails.webUrl} target="_blank" class="tripadvisor-button">
-                        <lightning-icon icon-name="utility:new_window" size="small" class="slds-m-right_x-small"></lightning-icon>
-                        View on TripAdvisor
-                    </a>
-                </div>
+                <!-- Booking Link -->
+                <template if:true={selectedActivity.bookingUrl}>
+                    <div class="booking-link slds-m-top_medium">
+                        <a href={selectedActivity.bookingUrl} target="_blank" class="booking-button">
+                            <lightning-icon icon-name="utility:new_window" size="small" class="slds-m-right_x-small"></lightning-icon>
+                            Book This Experience
+                        </a>
+                    </div>
+                </template>
             </template>
             
-            <!-- Search Results View -->
+            <!-- Activities List View -->
             <template if:false={showDetails}>
-                <template if:true={hasSearchResults}>
-                    <div class="slds-text-heading_small slds-m-bottom_small">
-                        Destinations in {countryName}
-                    </div>
-                    
-                    <div class="search-results">
-                        <template for:each={searchResults} for:item="location">
-                            <div key={location.id} class="result-item" data-id={location.id} onclick={handleLocationClick}>
-                                <div class="result-header">
-                                    <div class="result-name">{location.name}</div>
-                                    <template if:true={location.rating}>
-                                        <div class="result-rating">
-                                            <span class="rating-value">{location.rating}/5</span>
-                                            <span class="review-count">({location.numReviews} reviews)</span>
+                <template if:true={hasActivities}>
+                    <div class="activities-results">
+                        <template for:each={activities} for:item="activity">
+                            <div key={activity.id} class="activity-item" data-id={activity.id} onclick={handleActivityClick}>
+                                <div class="activity-item-header">
+                                    <div class="activity-item-name">{activity.name}</div>
+                                    <template if:true={activity.rating}>
+                                        <div class="activity-item-rating">
+                                            <span class="rating-value">{activity.rating}/5</span>
+                                            <span class="review-count">({activity.reviewCount} reviews)</span>
                                         </div>
                                     </template>
                                 </div>
-                                <div class="result-type">{location.type}</div>
-                                <template if:true={location.address}>
-                                    <div class="result-address">{location.address}</div>
+                                <div class="activity-item-category">{activity.category}</div>
+                                <template if:true={activity.description}>
+                                    <div class="activity-item-description">{activity.description}</div>
+                                </template>
+                                <template if:true={activity.priceAmount}>
+                                    <div class="activity-item-price">
+                                        From {activity.priceCurrency} {activity.priceAmount}
+                                    </div>
                                 </template>
                             </div>
                         </template>
                     </div>
                 </template>
                 
-                <template if:false={hasSearchResults}>
+                <template if:false={hasActivities}>
                     <div class="slds-illustration slds-illustration_small slds-p-around_small">
                         <div class="slds-text-longform">
-                            <p class="slds-text-body_regular">No destinations found for {countryName}.</p>
-                            <p class="slds-text-body_regular">Try refreshing or check another country.</p>
+                            <p class="slds-text-body_regular">No tours and activities found for this destination.</p>
+                            <p class="slds-text-body_regular">Try refreshing or check another destination.</p>
                         </div>
                     </div>
                 </template>

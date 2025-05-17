@@ -35,6 +35,9 @@ export default class TripMap extends NavigationMixin(LightningElement) {
     @track center;
     @track zoomLevel = 12;
     @track showExpenseModal = false;
+    
+    // NEW: Flight & Hotel Search Modal State
+    @track showFlightHotelModal = false;
 
     // Component State
     @track showSpinner = true;
@@ -131,8 +134,9 @@ export default class TripMap extends NavigationMixin(LightningElement) {
             this.showSpinner = false;
         }
     }
+    
     connectedCallback() {
-            this.selectedLocationMarkers = [];
+        this.selectedLocationMarkers = [];
     }
 
     // --- Data Loading ---
@@ -421,7 +425,7 @@ export default class TripMap extends NavigationMixin(LightningElement) {
         this.updateMarkerSizes();
     }
 
-updateMarkerSizes() {
+    updateMarkerSizes() {
         this.mapMarkers = this.mapMarkers.map(marker => {
             const updatedMarker = { ...marker };
             if (updatedMarker.mapIcon && typeof updatedMarker.mapIcon._baseScale === 'number') {
@@ -438,7 +442,7 @@ updateMarkerSizes() {
         return { disableDefaultUI: true }; 
     }
 
-    // --- Add Item Modal ---
+    // --- Modal Handlers ---
     handleAddItem() { 
         this.resetItemForm(); 
         this.removeTempMarker(); 
@@ -448,6 +452,24 @@ updateMarkerSizes() {
     handleCloseAddItem() { 
         this.showAddItemModal = false; 
         this.removeTempMarker(); 
+    }
+
+    // NEW: Flight & Hotel Search Modal Handlers
+    handleFlightHotelSearch() {
+        this.showFlightHotelModal = true; 
+    }
+    
+    handleCloseFlightHotelModal() {
+        this.showFlightHotelModal = false; 
+    }
+
+    // Expense Modal Handlers
+    handleTotalSpentClick() {
+        this.showExpenseModal = true;
+    }
+    
+    handleCloseExpenseModal() {
+        this.showExpenseModal = false;
     }
 
     resetItemForm() {
@@ -724,21 +746,22 @@ updateMarkerSizes() {
             this.zoomLevel = 17;
         }
     }
-    updateSelectedLocationMarkers() {
-    if (!this.selectedLocation) {
-        this.selectedLocationMarkers = [];
-        return;
-    }
     
-    this.selectedLocationMarkers = [{
-        location: {
-            Latitude: this.selectedLocation.latitude,
-            Longitude: this.selectedLocation.longitude
-        },
-        title: this.selectedLocation.name,
-        description: this.selectedLocation.label || '',
-        icon: 'standard:location'
-    }];
+    updateSelectedLocationMarkers() {
+        if (!this.selectedLocation) {
+            this.selectedLocationMarkers = [];
+            return;
+        }
+        
+        this.selectedLocationMarkers = [{
+            location: {
+                Latitude: this.selectedLocation.latitude,
+                Longitude: this.selectedLocation.longitude
+            },
+            title: this.selectedLocation.name,
+            description: this.selectedLocation.label || '',
+            icon: 'standard:location'
+        }];
     }
     
     handleClearSelectedLocation() { 
@@ -746,7 +769,6 @@ updateMarkerSizes() {
         this.searchTerm = '';
         this.selectedLocationMarkers = [];
     }
-    
     
     addTempMarker(lat, lng, title = 'New Location') {
         this.removeTempMarker();
@@ -909,22 +931,17 @@ updateMarkerSizes() {
         try { return JSON.stringify(this.error); } 
         catch(e) { return 'An unknown error occurred.'; }
     }
-    handleTotalSpentClick() {
-        this.showExpenseModal = true;
-    }
-    
-    handleCloseExpenseModal() {
-        this.showExpenseModal = false;
-    }
     
     // Add this getter for total spent
     get totalSpent() {
         return getFieldValue(this.trip, TRIP_TOTAL_SPENT_FIELD) || 0;
     }
+    
     get detailsContainerClass() {
         const baseClass = 'item-details-container';
         return this.selectedLocation ? baseClass : `${baseClass} form-disabled`;
     }
+    
     /**
      * Returns true if form fields should be disabled
      */

@@ -4,25 +4,25 @@
     color: #032d60;
 }
 
-/* Location Details Styles */
-.location-header {
+/* Activity Details Styles */
+.activity-header {
     margin-bottom: 1rem;
 }
 
-.location-name {
+.activity-name {
     font-size: 1.25rem;
     font-weight: 600;
     color: #032d60;
     margin-bottom: 0.25rem;
 }
 
-.location-type {
+.activity-category {
     text-transform: capitalize;
     font-size: 0.875rem;
     color: #706e6b;
 }
 
-.location-rating {
+.activity-rating {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
@@ -50,10 +50,22 @@
     color: #e0e5ee;
 }
 
-.location-description {
+.activity-description {
     font-size: 0.875rem;
     line-height: 1.5;
     color: #3e3e3c;
+}
+
+/* Activity Image */
+.activity-image {
+    text-align: center;
+}
+
+.activity-photo {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .detail-item {
@@ -73,17 +85,25 @@
     font-size: 0.875rem;
 }
 
-.tripadvisor-link {
+/* Price Display */
+.price-value {
+    font-weight: 600;
+    color: #00a862;
+    font-size: 1rem;
+}
+
+/* Booking Link */
+.booking-link {
     text-align: center;
     margin-top: 1.5rem;
 }
 
-.tripadvisor-button {
+.booking-button {
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 0.5rem 1rem;
-    background-color: #00aa6c;
+    background-color: #0070d2;
     color: white;
     border-radius: 4px;
     font-weight: 600;
@@ -92,20 +112,20 @@
     width: 100%;
 }
 
-.tripadvisor-button:hover {
-    background-color: #008a58;
+.booking-button:hover {
+    background-color: #005fb2;
     color: white;
     text-decoration: none;
 }
 
-/* Search Results Styles */
-.search-results {
+/* Activities List Styles */
+.activities-results {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
 }
 
-.result-item {
+.activity-item {
     border: 1px solid #e5e5e5;
     border-radius: 4px;
     padding: 0.75rem;
@@ -113,40 +133,48 @@
     cursor: pointer;
 }
 
-.result-item:hover {
+.activity-item:hover {
     transform: translateY(-2px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.result-header {
+.activity-item-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 0.5rem;
 }
 
-.result-name {
+.activity-item-name {
     font-weight: 600;
     font-size: 1rem;
     color: #032d60;
 }
 
-.result-rating {
+.activity-item-rating {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
 }
 
-.result-type {
+.activity-item-category {
     text-transform: capitalize;
     font-size: 0.75rem;
     color: #706e6b;
     margin-bottom: 0.25rem;
 }
 
-.result-address {
-    font-size: 0.75rem;
+.activity-item-description {
+    font-size: 0.875rem;
     color: #3e3e3c;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+.activity-item-price {
+    font-weight: 600;
+    color: #00a862;
+    font-size: 0.875rem;
 }
 
 .review-count {
@@ -168,16 +196,16 @@
 
 /* Responsive Adjustments */
 @media (max-width: 768px) {
-    .result-header {
+    .activity-item-header {
         flex-direction: column;
     }
     
-    .result-rating {
+    .activity-item-rating {
         align-items: flex-start;
         margin-top: 0.5rem;
     }
     
-    .location-rating {
+    .activity-rating {
         align-items: flex-start;
         margin-top: 0.5rem;
     }

@@ -1,12 +1,13 @@
-/* tripMap.css - Adding new styles for itinerary display */
+/* tripMap.css - Updated with bigger map and component height */
 
 .slds-card {
     border-radius: var(--lwc-borderRadiusLarge, 0.5rem);
+    min-height: 900px; /* Increased overall component height */
 }
 
 .map-container {
     position: relative;
-    height: 800px;
+    height: 900px; /* Increased from 800px to 900px */
     width: 100%;
 }
 
@@ -46,10 +47,11 @@ dl.slds-list_horizontal dd {
 
 /* New styles for itinerary display */
 
-/* Itinerary container styling */
+/* Itinerary container styling - Increased height to match map */
 .itinerary-container {
     border-radius: 8px;
     background-color: #f9f9f9;
+    max-height: 750px !important; /* Increased from 600px to match larger map */
 }
 
 /* Day header styling */
@@ -157,7 +159,11 @@ dl.slds-list_horizontal dd {
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .map-container {
-        height: 350px;
+        height: 450px; /* Increased from 350px for mobile */
+    }
+    
+    .itinerary-container {
+        max-height: 500px !important; /* Increased for mobile */
     }
     
     lightning-map {
@@ -171,6 +177,17 @@ dl.slds-list_horizontal dd {
     .slds-modal_large .slds-modal__container {
         width: 95%;
         max-width: none;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+    .map-container {
+        height: 350px; /* Increased from 200px */
+    }
+    
+    .activity-item {
+        padding: 0.5rem 0.25rem;
     }
 }
 
@@ -192,8 +209,8 @@ dl.slds-list_horizontal dd {
     border-radius: 0.25rem;
     background-color: #f3f3f3;
 }
-/* Add these styles to your existing CSS file for the new horizontal trip details */
 
+/* Add these styles to your existing CSS file for the new horizontal trip details */
 .trip-details-horizontal {
     display: flex;
     flex-wrap: wrap;
@@ -224,30 +241,7 @@ dl.slds-list_horizontal dd {
     font-weight: 500;
 }
 
-/* Adjust itinerary container for more vertical space */
-.itinerary-container {
-    max-height: 600px !important; /* Increased from 400px */
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .trip-details-horizontal {
-        flex-direction: column;
-    }
-    
-    .trip-detail-item {
-        border-right: none;
-        border-bottom: 1px solid #e5e5e5;
-        padding: 0.5rem 0;
-    }
-    
-    .trip-detail-item:last-child {
-        border-bottom: none;
-    }
-}
-
 /* Add to your existing CSS file */
-
 .total-spent-link {
     color: var(--lwc-colorTextLink, #0070d2);
     text-decoration: none;
@@ -289,57 +283,7 @@ lightning-progress-bar[variant="danger"] .slds-progress-bar__value {
 .custom-progress-value {
     transition: width 0.3s ease, background-color 0.3s ease;
 }
-/* Mobile-first base styles */
-.map-container {
-    height: 300px;
-    width: 100%;
-}
 
-/* Responsive adjustments for map controls */
-.zoom-controls {
-    position: absolute;
-    bottom: 10px;
-    left: 10px;
-    z-index: 10;
-}
-
-/* Adjust itinerary container for mobile */
-.itinerary-container {
-    max-height: 400px !important;
-    overflow-y: auto;
-}
-
-/* Responsive media queries */
-@media (max-width: 768px) {
-    .map-container {
-        height: 250px;
-    }
-    
-    .main-layout lightning-layout-item {
-        padding: 0.25rem;
-    }
-    
-    .trip-details-horizontal {
-        flex-direction: column;
-    }
-    
-    .trip-detail-item {
-        border-right: none;
-        border-bottom: 1px solid #e5e5e5;
-        padding: 0.5rem 0;
-    }
-}
-
-/* Very small screens */
-@media (max-width: 480px) {
-    .map-container {
-        height: 200px;
-    }
-    
-    .activity-item {
-        padding: 0.5rem 0.25rem;
-    }
-}
 .modal-content {
     max-height: 70vh;
     overflow-y: auto;
@@ -409,6 +353,7 @@ lightning-progress-bar[variant="danger"] .slds-progress-bar__value {
     font-size: 0.75rem;
     color: #706e6b;
 }
+
 /* Enhanced Add Item Modal Styles */
 .modal-two-column {
     min-height: 400px;
@@ -513,5 +458,19 @@ lightning-progress-bar[variant="danger"] .slds-progress-bar__value {
     .item-details-container {
         padding-left: 0;
         padding-top: 1rem;
+    }
+    
+    .trip-details-horizontal {
+        flex-direction: column;
+    }
+    
+    .trip-detail-item {
+        border-right: none;
+        border-bottom: 1px solid #e5e5e5;
+        padding: 0.5rem 0;
+    }
+    
+    .trip-detail-item:last-child {
+        border-bottom: none;
     }
 }

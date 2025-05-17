@@ -1,3 +1,4 @@
+<!-- Updated tripMap.html - Add the flight/hotel button and modal -->
 <template>
     <lightning-card
         title={tripName}
@@ -11,6 +12,13 @@
                     label="Add Item"
                     icon-name="utility:add"
                     onclick={handleAddItem}
+                    class="slds-m-right_small">
+                </lightning-button>
+                <lightning-button
+                    variant="neutral"
+                    label="Flights & Hotels"
+                    icon-name="standard:travel_mode"
+                    onclick={handleFlightHotelSearch}
                     class="slds-m-right_small">
                 </lightning-button>
             </lightning-button-group>
@@ -450,6 +458,29 @@
                 <div class="slds-modal__content slds-p-around_none slds-is-relative" id="expense-modal-content">
                     <!-- Embed the expense tracker component -->
                     <c-expense-tracker record-id={recordId}></c-expense-tracker>
+                </div>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+    <!-- NEW: Flight & Hotel Search Modal -->
+    <template if:true={showFlightHotelModal}>
+        <section role="dialog" tabindex="-1" aria-modal="true" aria-labelledby="flight-hotel-modal-heading" class="slds-modal slds-fade-in-open slds-modal_large">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <lightning-button-icon 
+                        icon-name="utility:close" 
+                        class="slds-modal__close" 
+                        onclick={handleCloseFlightHotelModal} 
+                        alternative-text="Close" 
+                        title="Close">
+                    </lightning-button-icon>
+                    <h2 id="flight-hotel-modal-heading" class="slds-modal__title slds-hyphenate">Search Flights & Hotels</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_none slds-is-relative" id="flight-hotel-modal-content">
+                    <!-- Embed the flight hotel search component -->
+                    <c-flight-hotel-search record-id={recordId}></c-flight-hotel-search>
                 </div>
             </div>
         </section>

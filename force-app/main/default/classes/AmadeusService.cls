@@ -484,4 +484,201 @@ public with sharing class AmadeusService {
     
     // Custom exception class
     public class AmadeusException extends Exception {}
+
+    /**
+     * Search for tours and activities in a destination
+     * @param latitude Latitude of the destination
+     * @param longitude Longitude of the destination 
+     * @param radius Search radius in kilometers (default 20)
+     * @return ActivitySearchResult with list of activities
+     */
+    @AuraEnabled
+    public static ActivitySearchResult searchActivities(String latitude, String longitude, Integer radius) {
+        try {
+            Map<String, String> parameters = new Map<String, String>();
+            parameters.put('latitude', latitude);
+            parameters.put('longitude', longitude);
+            parameters.put('radius', String.valueOf(radius != null ? radius : 20));
+            
+            HttpResponse response = makeApiCall('/v1/shopping/activities', parameters);
+            
+            if (response.getStatusCode() == 200) {
+                Map<String, Object> responseBody = (Map<String, Object>) JSON.deserializeUntyped(response.getBody());
+                return parseActivityResults(responseBody);
+            } else {
+                throw new AmadeusException('Activity search failed: ' + response.getStatusCode() + ' - ' + response.getBody());
+            }
+        } catch (Exception e) {
+            System.debug('Exception in searchActivities: ' + e.getMessage());
+            throw new AuraHandledException('Error searching activities: ' + e.getMessage());
+        }
+    }
+
+    /**
+     * Search activities by city name
+     * @param cityName Name of the city
+     * @param radius Search radius in kilometers
+     * @return ActivitySearchResult with list of activities
+     */
+    @AuraEnabled
+    public static ActivitySearchResult searchActivitiesByCity(String cityName, Integer radius) {
+        try {
+            // First get location coordinates for the city
+            List<LocationSuggestion> locations = getLocationSuggestions(cityName);
+            LocationSuggestion cityLocation = null;
+            
+            // Find a city in the results
+            for (LocationSuggestion location : locations) {
+                if (location.subType == 'CITY' || location.cityName != null) {
+                    cityLocation = location;
+                    break;
+                }
+            }
+            
+            if (cityLocation != null) {
+                // For this example, we'll use approximate coordinates
+                // In a real implementation, you'd get actual coordinates from the location API
+                Map<String, String> cityCoords = getCityCoordinates(cityName);
+                
+                if (cityCoords != null) {
+                    return searchActivities(cityCoords.get('latitude'), cityCoords.get('longitude'), radius);
+                }
+            }
+            
+            // If we can't find coordinates, return empty result
+            return new ActivitySearchResult();
+        } catch (Exception e) {
+            System.debug('Exception in searchActivitiesByCity: ' + e.getMessage());
+            throw new AuraHandledException('Error searching activities by city: ' + e.getMessage());
+        }
+    }
+
+    /**
+     * Get activity details by ID
+     * @param activityId The activity ID
+     * @return Activity with detailed information
+     */
+    @AuraEnabled
+    public static Activity getActivityDetails(String activityId) {
+        try {
+            HttpResponse response = makeApiCall('/v1/shopping/activities/' + activityId, null);
+            
+            if (response.getStatusCode() == 200) {
+                Map<String, Object> responseBody = (Map<String, Object>) JSON.deserializeUntyped(response.getBody());
+                Map<String, Object> data = (Map<String, Object>) responseBody.get('data');
+                return parseActivityDetails(data);
+            } else {
+                throw new AmadeusException('Activity details failed: ' + response.getStatusCode() + ' - ' + response.getBody());
+            }
+        } catch (Exception e) {
+            System.debug('Exception in getActivityDetails: ' + e.getMessage());
+            throw new AuraHandledException('Error getting activity details: ' + e.getMessage());
+        }
+    }
+
+    // Helper method to get approximate coordinates for major cities
+    private static Map<String, String> getCityCoordinates(String cityName) {
+        Map<String, Map<String, String>> cityCoords = new Map<String, Map<String, String>>{
+            'Amsterdam' => new Map<String, String>{'latitude' => '52.3676', 'longitude' => '4.9041'},
+            'Budapest' => new Map<String, String>{'latitude' => '47.4979', 'longitude' => '19.0402'},
+            'Paris' => new Map<String, String>{'latitude' => '48.8566', 'longitude' => '2.3522'},
+            'London' => new Map<String, String>{'latitude' => '51.5074', 'longitude' => '-0.1278'},
+            'Rome' => new Map<String, String>{'latitude' => '41.9028', 'longitude' => '12.4964'},
+            'Madrid' => new Map<String, String>{'latitude' => '40.4168', 'longitude' => '-3.7038'},
+            'Berlin' => new Map<String, String>{'latitude' => '52.5200', 'longitude' => '13.4050'},
+            'Vienna' => new Map<String, String>{'latitude' => '48.2082', 'longitude' => '16.3738'}
+        };
+        
+        return cityCoords.get(cityName);
+    }
+
+    // Parse activity search results
+    private static ActivitySearchResult parseActivityResults(Map<String, Object> responseBody) {
+        ActivitySearchResult result = new ActivitySearchResult();
+        result.activities = new List<Activity>();
+        
+        List<Object> data = (List<Object>) responseBody.get('data');
+        if (data != null) {
+            for (Object item : data) {
+                Map<String, Object> activityData = (Map<String, Object>) item;
+                Activity activity = parseActivityDetails(activityData);
+                result.activities.add(activity);
+            }
+        }
+        
+        return result;
+    }
+
+    // Parse individual activity details
+    private static Activity parseActivityDetails(Map<String, Object> activityData) {
+        Activity activity = new Activity();
+        
+        activity.id = (String) activityData.get('id');
+        activity.name = (String) activityData.get('name');
+        activity.shortDescription = (String) activityData.get('shortDescription');
+        
+        // Parse rating
+        Map<String, Object> rating = (Map<String, Object>) activityData.get('rating');
+        if (rating != null) {
+            activity.rating = (Decimal) rating.get('score');
+            activity.reviewCount = (Integer) rating.get('count');
+        }
+        
+        // Parse price
+        Map<String, Object> price = (Map<String, Object>) activityData.get('price');
+        if (price != null) {
+            activity.priceAmount = (String) price.get('amount');
+            activity.priceCurrency = (String) price.get('currencyCode');
+        }
+        
+        // Parse pictures
+        List<Object> pictures = (List<Object>) activityData.get('pictures');
+        if (pictures != null && !pictures.isEmpty()) {
+            activity.pictures = new List<String>();
+            for (Object pic : pictures) {
+                activity.pictures.add((String) pic);
+            }
+        }
+        
+        // Parse booking link
+        Map<String, Object> bookingLink = (Map<String, Object>) activityData.get('bookingLink');
+        if (bookingLink != null) {
+            activity.bookingUrl = (String) bookingLink.get('url');
+        }
+        
+        // Parse location
+        Map<String, Object> geoCode = (Map<String, Object>) activityData.get('geoCode');
+        if (geoCode != null) {
+            activity.latitude = (Decimal) geoCode.get('latitude');
+            activity.longitude = (Decimal) geoCode.get('longitude');
+        }
+        
+        // Parse categories
+        List<Object> categories = (List<Object>) activityData.get('categories');
+        if (categories != null && !categories.isEmpty()) {
+            activity.category = (String) categories[0];
+        }
+        
+        return activity;
+    }
+
+    // Wrapper classes for Activities API
+    public class ActivitySearchResult {
+        @AuraEnabled public List<Activity> activities;
+    }
+
+    public class Activity {
+        @AuraEnabled public String id;
+        @AuraEnabled public String name;
+        @AuraEnabled public String shortDescription;
+        @AuraEnabled public Decimal rating;
+        @AuraEnabled public Integer reviewCount;
+        @AuraEnabled public String priceAmount;
+        @AuraEnabled public String priceCurrency;
+        @AuraEnabled public List<String> pictures;
+        @AuraEnabled public String bookingUrl;
+        @AuraEnabled public Decimal latitude;
+        @AuraEnabled public Decimal longitude;
+        @AuraEnabled public String category;
+    }
 }

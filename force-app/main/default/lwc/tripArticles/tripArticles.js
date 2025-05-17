@@ -1,11 +1,12 @@
 import { LightningElement, api, track, wire } from 'lwc';
 import { getRecord } from 'lightning/uiRecordApi';
 import TRIP_COUNTRY_FIELD from '@salesforce/schema/Trip__c.Country__c';
+import TRIP_DESTINATION_FIELD from '@salesforce/schema/Trip__c.Destination__c';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import searchActivitiesByCity from '@salesforce/apex/AmadeusService.searchActivitiesByCity';
+import getActivityDetails from '@salesforce/apex/AmadeusService.getActivityDetails';
 
-const TRIP_FIELDS = [TRIP_COUNTRY_FIELD];
-const API_KEY = '3A4A5FFCBE79431F88E0D41FDE4F78EA';
-const API_BASE_URL = 'https://api.content.tripadvisor.com/api/v1';
+const TRIP_FIELDS = [TRIP_COUNTRY_FIELD, TRIP_DESTINATION_FIELD];
 
 export default class TripArticles extends LightningElement {
     @api recordId; // Trip Id
@@ -13,11 +14,11 @@ export default class TripArticles extends LightningElement {
     @track error;
     @track errorMessage = 'An error occurred while loading content.';
     
-    // TripAdvisor API data
+    // Activities data
     @track countryName;
-    @track searchResults = [];
-    @track selectedLocation;
-    @track locationDetails;
+    @track destinationCity;
+    @track activities = [];
+    @track selectedActivity;
     @track showDetails = false;
     @track formattedRating = [];
     
@@ -25,7 +26,8 @@ export default class TripArticles extends LightningElement {
     tripRecord({ error, data }) {
         if (data) {
             this.countryName = data.fields.Country__c.value;
-            this.searchLocations();
+            this.destinationCity = data.fields.Destination__c?.value;
+            this.searchActivities();
         } else if (error) {
             this.error = error;
             this.errorMessage = error.message || 'Could not load trip details';
@@ -34,120 +36,102 @@ export default class TripArticles extends LightningElement {
         }
     }
     
-    // Location Search API Call
-    async searchLocations() {
-        if (!this.countryName) {
+    // Search for activities in the destination
+    async searchActivities() {
+        const searchLocation = this.destinationCity || this.countryName;
+        
+        if (!searchLocation) {
             this.isLoading = false;
             return;
         }
         
         try {
-            // Step 1: Search for locations based on country
-            const searchUrl = `${API_BASE_URL}/location/search?key=${API_KEY}&searchQuery=${encodeURIComponent(this.countryName)}&language=en&category=attractions`;
-            
-            const response = await fetch(searchUrl, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json'
-                }
+            const result = await searchActivitiesByCity({
+                cityName: searchLocation,
+                radius: 25 // 25km radius
             });
             
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            
-            if (data && data.data && data.data.length > 0) {
-                this.searchResults = data.data.map(location => ({
-                    id: location.location_id,
-                    name: location.name,
-                    type: location.location_type || 'Unknown',
-                    address: location.address_obj ? location.address_obj.address_string : '',
-                    rating: location.rating || 0,
-                    numReviews: location.num_reviews || 0,
-                    webUrl: location.web_url || '',
-                    thumbnail: location.photo ? location.photo.images.small.url : null,
-                    ratingImageUrl: location.rating_image_url || null
+            if (result && result.activities && result.activities.length > 0) {
+                this.activities = result.activities.map(activity => ({
+                    id: activity.id,
+                    name: activity.name,
+                    description: activity.shortDescription || `Discover ${activity.name} in ${searchLocation}`,
+                    rating: activity.rating || 0,
+                    reviewCount: activity.reviewCount || 0,
+                    priceAmount: activity.priceAmount,
+                    priceCurrency: activity.priceCurrency,
+                    category: activity.category || 'Activity',
+                    pictures: activity.pictures || [],
+                    bookingUrl: activity.bookingUrl,
+                    type: 'Tour & Activity'
                 }));
                 
-                // Automatically select the first result and load its details
-                if (this.searchResults.length > 0) {
-                    this.selectLocation(this.searchResults[0].id);
+                // Automatically select the first activity
+                if (this.activities.length > 0) {
+                    await this.selectActivity(this.activities[0].id);
                 }
             } else {
-                // No results found
-                this.searchResults = [];
-                this.isLoading = false;
+                // No activities found
+                this.activities = [];
+                this.loadFallbackContent();
             }
         } catch (error) {
-            console.error('Error searching locations:', error);
+            console.error('Error searching activities:', error);
             this.error = error;
-            this.errorMessage = error.message || 'Error searching locations';
-            this.searchResults = [];
-            this.isLoading = false;
+            this.errorMessage = error.message || 'Error searching activities';
+            this.activities = [];
             this.loadFallbackContent();
-        }
-    }
-    
-    // Location Details API Call
-    async selectLocation(locationId) {
-        this.isLoading = true;
-        
-        try {
-            // Step 2: Get location details
-            const detailsUrl = `${API_BASE_URL}/location/${locationId}/details?key=${API_KEY}&language=en`;
-            
-            const response = await fetch(detailsUrl, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json'
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            
-            this.locationDetails = {
-                id: data.location_id,
-                name: data.name,
-                description: data.description || '',
-                address: data.address_obj ? data.address_obj.address_string : '',
-                phone: data.phone || '',
-                website: data.website || '',
-                rating: data.rating || 0,
-                ratingImageUrl: data.rating_image_url || null,
-                numReviews: data.num_reviews || 0,
-                rankingData: data.ranking_data || {},
-                webUrl: data.web_url || '',
-                priceLevel: data.price_level || '',
-                hours: data.hours ? data.hours.week_ranges : [],
-                photos: data.photos || []
-            };
-            
-            this.selectedLocation = this.searchResults.find(loc => loc.id === locationId);
-            this.formattedRating = this.formatRatingAsStars(this.locationDetails.rating);
-            this.showDetails = true;
-        } catch (error) {
-            console.error('Error fetching location details:', error);
-            this.error = error;
-            this.errorMessage = error.message || 'Error fetching location details';
-            this.locationDetails = null;
         } finally {
             this.isLoading = false;
         }
     }
     
-    // Handle selecting a different location
-    handleLocationClick(event) {
-        const locationId = event.currentTarget.dataset.id;
-        this.selectLocation(locationId);
+    // Get detailed information for an activity
+    async selectActivity(activityId) {
+        this.isLoading = true;
+        
+        try {
+            const activityDetails = await getActivityDetails({
+                activityId: activityId
+            });
+            
+            this.selectedActivity = {
+                id: activityDetails.id,
+                name: activityDetails.name,
+                description: activityDetails.shortDescription || '',
+                rating: activityDetails.rating || 0,
+                reviewCount: activityDetails.reviewCount || 0,
+                priceAmount: activityDetails.priceAmount,
+                priceCurrency: activityDetails.priceCurrency,
+                category: activityDetails.category || 'Activity',
+                pictures: activityDetails.pictures || [],
+                bookingUrl: activityDetails.bookingUrl,
+                latitude: activityDetails.latitude,
+                longitude: activityDetails.longitude
+            };
+            
+            this.formattedRating = this.formatRatingAsStars(this.selectedActivity.rating);
+            this.showDetails = true;
+        } catch (error) {
+            console.error('Error fetching activity details:', error);
+            // Fallback to the activity from the list
+            this.selectedActivity = this.activities.find(act => act.id === activityId);
+            if (this.selectedActivity) {
+                this.formattedRating = this.formatRatingAsStars(this.selectedActivity.rating);
+                this.showDetails = true;
+            }
+        } finally {
+            this.isLoading = false;
+        }
     }
     
-    // Go back to results list
+    // Handle selecting a different activity
+    handleActivityClick(event) {
+        const activityId = event.currentTarget.dataset.id;
+        this.selectActivity(activityId);
+    }
+    
+    // Go back to activities list
     handleBackToResults() {
         this.showDetails = false;
     }
@@ -157,118 +141,86 @@ export default class TripArticles extends LightningElement {
         this.isLoading = true;
         this.error = null;
         this.errorMessage = '';
-        this.searchLocations();
+        this.searchActivities();
     }
     
     // Load fallback content if API calls fail
     loadFallbackContent() {
-        // Create mock data for display
-        const mockData = this.getMockDataForCountry(this.countryName);
-        this.searchResults = mockData.locations || [];
+        const searchLocation = this.destinationCity || this.countryName;
         
-        if (this.searchResults.length > 0) {
-            this.locationDetails = mockData.details;
-            this.selectedLocation = this.searchResults[0];
-            this.formattedRating = this.formatRatingAsStars(this.locationDetails.rating);
-            this.showDetails = true;
-        }
-    }
-    
-    // Provide mock data for demo/fallback
-    getMockDataForCountry(country) {
-        const mockData = {
-            locations: [],
-            details: null
-        };
-        
-        if (country === 'Hungary') {
-            mockData.locations = [
+        // Create mock activities based on destination
+        if (searchLocation === 'Budapest' || this.countryName === 'Hungary') {
+            this.activities = [
                 {
-                    id: '276868',
-                    name: 'Budapest',
-                    type: 'City',
-                    address: 'Budapest, Central Hungary',
-                    rating: 4.5,
-                    numReviews: 1200,
-                    webUrl: 'https://www.tripadvisor.com/Tourism-g274887-Budapest_Central_Hungary-Vacations.html'
+                    id: 'bud-1',
+                    name: 'Budapest Parliament Building Tour',
+                    description: 'Explore the magnificent Hungarian Parliament Building with guided tours showcasing Neo-Gothic architecture.',
+                    rating: 4.6,
+                    reviewCount: 2340,
+                    priceAmount: '25',
+                    priceCurrency: 'EUR',
+                    category: 'SIGHTSEEING',
+                    type: 'Tour & Activity'
                 },
                 {
-                    id: '274906',
-                    name: 'Lake Balaton',
-                    type: 'Attraction',
-                    address: 'Western Hungary',
-                    rating: 4.5,
-                    numReviews: 800,
-                    webUrl: 'https://www.tripadvisor.com/Attraction_Review-g274906-d276866-Reviews-Lake_Balaton-Balatonfured_Veszprem_County_Central_Transdanubia.html'
+                    id: 'bud-2',
+                    name: 'Széchenyi Thermal Baths Experience',
+                    description: 'Relax in one of Europe\'s largest thermal bath complexes with healing waters and beautiful architecture.',
+                    rating: 4.4,
+                    reviewCount: 1890,
+                    priceAmount: '20',
+                    priceCurrency: 'EUR',
+                    category: 'ENTERTAINMENT',
+                    type: 'Tour & Activity'
                 }
             ];
-            
-            mockData.details = {
-                id: '276868',
-                name: 'Budapest',
-                description: 'Budapest, Hungary\'s capital, is bisected by the River Danube. Its 19th-century Chain Bridge connects the hilly Buda district with flat Pest. A funicular runs up Castle Hill to Buda\'s Old Town, where the Budapest History Museum traces city life from Roman times onward. Trinity Square is home to 13th-century Matthias Church and the turrets of the Fishermen\'s Bastion, which offer sweeping views.',
-                address: 'Budapest, Central Hungary',
-                phone: '',
-                website: 'https://www.budapest.com/',
-                rating: 4.5,
-                numReviews: 1200,
-                webUrl: 'https://www.tripadvisor.com/Tourism-g274887-Budapest_Central_Hungary-Vacations.html',
-                photos: []
-            };
-        } else if (country === 'Netherlands') {
-            mockData.locations = [
+        } else if (searchLocation === 'Amsterdam' || this.countryName === 'Netherlands') {
+            this.activities = [
                 {
-                    id: '188590',
-                    name: 'Amsterdam',
-                    type: 'City',
-                    address: 'Amsterdam, North Holland Province',
-                    rating: 4.5,
-                    numReviews: 2500,
-                    webUrl: 'https://www.tripadvisor.com/Tourism-g188590-Amsterdam_North_Holland_Province-Vacations.html'
+                    id: 'ams-1',
+                    name: 'Anne Frank House Guided Tour',
+                    description: 'Visit the historic house where Anne Frank wrote her famous diary during World War II.',
+                    rating: 4.7,
+                    reviewCount: 5670,
+                    priceAmount: '16',
+                    priceCurrency: 'EUR',
+                    category: 'MUSEUMS',
+                    type: 'Tour & Activity'
+                },
+                {
+                    id: 'ams-2',
+                    name: 'Canal Cruise with Audio Guide',
+                    description: 'Explore Amsterdam\'s UNESCO World Heritage canals from the water with multilingual audio commentary.',
+                    rating: 4.3,
+                    reviewCount: 3450,
+                    priceAmount: '18',
+                    priceCurrency: 'EUR',
+                    category: 'SIGHTSEEING',
+                    type: 'Tour & Activity'
                 }
             ];
-            
-            mockData.details = {
-                id: '188590',
-                name: 'Amsterdam',
-                description: 'Amsterdam is the Netherlands\' capital, known for its artistic heritage, elaborate canal system and narrow houses with gabled facades, legacies of the city\'s 17th-century Golden Age. Its Museum District houses the Van Gogh Museum, works by Rembrandt and Vermeer at the Rijksmuseum, and modern art at the Stedelijk. Cycling is key to the city\'s character, and there are numerous bike paths.',
-                address: 'Amsterdam, North Holland Province',
-                phone: '',
-                website: 'https://www.amsterdam.nl/en/',
-                rating: 4.5,
-                numReviews: 2500,
-                webUrl: 'https://www.tripadvisor.com/Tourism-g188590-Amsterdam_North_Holland_Province-Vacations.html',
-                photos: []
-            };
         } else {
-            // Generic fallback for any other country
-            mockData.locations = [
+            // Generic activities
+            this.activities = [
                 {
-                    id: 'generic-1',
-                    name: `${country} Capital`,
-                    type: 'City',
-                    address: country,
-                    rating: 4.0,
-                    numReviews: 1000,
-                    webUrl: 'https://www.tripadvisor.com/'
+                    id: 'gen-1',
+                    name: `${searchLocation} City Walking Tour`,
+                    description: `Discover the highlights of ${searchLocation} with a professional local guide.`,
+                    rating: 4.2,
+                    reviewCount: 890,
+                    priceAmount: '20',
+                    priceCurrency: 'EUR',
+                    category: 'SIGHTSEEING',
+                    type: 'Tour & Activity'
                 }
             ];
-            
-            mockData.details = {
-                id: 'generic-1',
-                name: `${country} Capital`,
-                description: `Top destination in ${country} with attractions, museums, and local cuisine.`,
-                address: country,
-                phone: '',
-                website: '',
-                rating: 4.0,
-                numReviews: 1000,
-                webUrl: 'https://www.tripadvisor.com/',
-                photos: []
-            };
         }
         
-        return mockData;
+        if (this.activities.length > 0) {
+            this.selectedActivity = this.activities[0];
+            this.formattedRating = this.formatRatingAsStars(this.selectedActivity.rating);
+            this.showDetails = true;
+        }
     }
     
     // Format rating as stars
@@ -292,16 +244,6 @@ export default class TripArticles extends LightningElement {
         return stars;
     }
     
-    // Format date
-    formatDate(dateStr) {
-        const date = new Date(dateStr);
-        return new Intl.DateTimeFormat('en-US', { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric' 
-        }).format(date);
-    }
-    
     // Toast notification helper
     showToast(title, message, variant) {
         this.dispatchEvent(
@@ -314,11 +256,30 @@ export default class TripArticles extends LightningElement {
     }
     
     // Getters
-    get hasSearchResults() {
-        return this.searchResults && this.searchResults.length > 0;
+    get hasActivities() {
+        return this.activities && this.activities.length > 0;
     }
     
-    get hasPhotos() {
-        return this.locationDetails && this.locationDetails.photos && this.locationDetails.photos.length > 0;
+    get displayTitle() {
+        const location = this.destinationCity || this.countryName;
+        return `Tours & Activities in ${location}`;
+    }
+    
+    get priceDisplay() {
+        if (this.selectedActivity && this.selectedActivity.priceAmount) {
+            return `${this.selectedActivity.priceCurrency} ${this.selectedActivity.priceAmount}`;
+        }
+        return 'Price on request';
+    }
+    
+    get hasImages() {
+        return this.selectedActivity && this.selectedActivity.pictures && this.selectedActivity.pictures.length > 0;
+    }
+    
+    get primaryImage() {
+        if (this.hasImages) {
+            return this.selectedActivity.pictures[0];
+        }
+        return null;
     }
 }
