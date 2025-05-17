@@ -1,9 +1,8 @@
-/* Fix map container to eliminate empty space and center properly */
 .map-container {
     height: 500px;
     margin: 0;
-    padding: 0;
-    border-radius: 0;
+    padding-bottom: 4px;
+    border-radius: 0 0 1rem 1rem; /* Only round bottom corners to match card */
     overflow: hidden;
     position: relative;
 }
@@ -11,11 +10,20 @@
 /* Remove any padding from the card content */
 lightning-card .slds-card__body {
     padding: 0 !important;
+    border-radius: 0 0 1rem 1rem; /* Round bottom corners */
+    overflow: hidden;
 }
 
-/* Ensure the card header has minimal padding */
+/* Ensure the card header has minimal padding and proper top rounding */
 lightning-card .slds-card__header {
     padding: 0.75rem 1rem !important;
+    border-radius: 1rem 1rem 0 0; /* Only round top corners */
+}
+
+/* Ensure the overall card has proper rounding */
+lightning-card {
+    border-radius: 1rem;
+    overflow: hidden;
 }
 
 /* Ensure the inner div has no padding */
@@ -32,6 +40,7 @@ lightning-map {
     position: absolute;
     top: 0;
     left: 0;
+    border-radius: 0 0 1rem 1rem; /* Round bottom corners to match container */
 }
 
 /* Override any default margins/padding that might cause centering issues */
@@ -47,6 +56,7 @@ lightning-map iframe {
     border: none !important;
     margin: 0 !important;
     padding: 0 !important;
+    border-radius: 0 0 1rem 1rem; /* Round bottom corners */
 }
 
 .country-badge {

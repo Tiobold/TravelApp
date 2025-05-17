@@ -7,6 +7,7 @@ import getUserTrips from '@salesforce/apex/TripDashboardController.getUserTrips'
 import getTripStats from '@salesforce/apex/TripDashboardController.getTripStats';
 import getVisitedCountries from '@salesforce/apex/TripDashboardController.getVisitedCountries';
 import getExpenseBreakdown from '@salesforce/apex/TripDashboardController.getExpenseBreakdown';
+import getTripCompanions from '@salesforce/apex/TripCompanionController.getTripCompanions';
 
 export default class EnhancedHomepage extends NavigationMixin(LightningElement) {
     @track trips = [];
@@ -18,14 +19,15 @@ export default class EnhancedHomepage extends NavigationMixin(LightningElement) 
     @track tripStats = {};
     @track countries = [];
     @track hasFilterApplied = false;
-    @track totalDaysTravel = 0;
-    @track averageTripDuration = 0;
     
     // Expense overview data
     @track currentMonthExpenses = 0;
     @track lastMonthExpenses = 0;
     @track topExpenseCategories = [];
     
+    // Enhanced travel statistics
+    @track totalDaysTravel = 0;
+    @track averageTripDuration = 0;
     countriesVisited = 0;
     
     wiredTripsResult;
@@ -35,6 +37,8 @@ export default class EnhancedHomepage extends NavigationMixin(LightningElement) 
         this.wiredTripsResult = result;
         if (result.data) {
             this.processTrips(result.data);
+            // Load companions for each trip after processing
+            this.loadTripCompanions(result.data);
             this.error = undefined;
         } else if (result.error) {
             this.error = result.error;
@@ -182,7 +186,11 @@ export default class EnhancedHomepage extends NavigationMixin(LightningElement) 
                 formattedEndDate,
                 formattedBudget,
                 formattedSpent,
-                durationDays: tripDurationDays
+                durationDays: tripDurationDays,
+                // Initialize companion properties
+                companions: [],
+                totalCompanions: 0,
+                hasMoreCompanions: false
             };
         });
         
@@ -192,6 +200,53 @@ export default class EnhancedHomepage extends NavigationMixin(LightningElement) 
         
         // Apply initial filter
         this.applyFilter(this.currentFilter);
+    }
+
+    // Load companions for all trips
+    async loadTripCompanions(tripsData) {
+        try {
+            const tripIds = tripsData.map(trip => trip.Id);
+            const companionPromises = tripIds.map(tripId => 
+                getTripCompanions({ tripId })
+                    .then(result => ({ tripId, companions: result }))
+                    .catch(error => ({ tripId, companions: null, error }))
+            );
+            
+            const companionResults = await Promise.all(companionPromises);
+            
+            // Update trips with companion data
+            this.trips = this.trips.map(trip => {
+                const companionData = companionResults.find(result => result.tripId === trip.Id);
+                if (companionData && companionData.companions) {
+                    const confirmedCompanions = companionData.companions.confirmed || [];
+                    // Limit to first 3 companions for display
+                    const displayCompanions = confirmedCompanions.slice(0, 3).map(companion => ({
+                        id: companion.Id,
+                        name: companion.Name,
+                        photoUrl: companion.PhotoURL || '/img/icon/t4v35/standard/user_120.png'
+                    }));
+                    
+                    return {
+                        ...trip,
+                        companions: displayCompanions,
+                        totalCompanions: confirmedCompanions.length,
+                        hasMoreCompanions: confirmedCompanions.length > 3
+                    };
+                }
+                return {
+                    ...trip,
+                    companions: [],
+                    totalCompanions: 0,
+                    hasMoreCompanions: false
+                };
+            });
+            
+            // Re-apply current filter to update filtered trips
+            this.applyFilter(this.currentFilter);
+        } catch (error) {
+            console.error('Error loading trip companions:', error);
+            // Continue without companion data rather than failing
+        }
     }
     
     calculateBudgetPercentage(trip) {
@@ -394,10 +449,12 @@ export default class EnhancedHomepage extends NavigationMixin(LightningElement) 
     get upcomingTripsCount() {
         return this.tripStats.upcomingTrips || 0;
     }
+    
+    // New getters for enhanced statistics
     get totalDaysTravelFormatted() {
         return this.totalDaysTravel || 0;
     }
-
+    
     get averageTripDurationFormatted() {
         const avgDays = this.averageTripDuration;
         if (avgDays === 0) return '0 days';

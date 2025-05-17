@@ -105,6 +105,28 @@
                                             </template>
                                         </div>
                                         
+                                        <!-- Travel Companions -->
+                                        <template if:true={trip.companions}>
+                                            <div class="trip-companions">
+                                                <div class="companions-label">
+                                                    <lightning-icon icon-name="utility:groups" size="x-small" class="companions-icon"></lightning-icon>
+                                                    <span class="companions-text">Travel companions</span>
+                                                </div>
+                                                <div class="companions-avatars">
+                                                    <template for:each={trip.companions} for:item="companion">
+                                                        <div key={companion.id} class="companion-avatar" title={companion.name}>
+                                                            <img src={companion.photoUrl} alt={companion.name} />
+                                                        </div>
+                                                    </template>
+                                                    <template if:true={trip.hasMoreCompanions}>
+                                                        <div class="companion-more">
+                                                            <span>+{trip.totalCompanions}</span>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        
                                         <!-- Compact Budget Progress -->
                                         <div class="compact-progress">
                                             <div class="progress-labels">
