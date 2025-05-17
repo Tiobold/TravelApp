@@ -1,4 +1,4 @@
-/* Revised Homepage Styles */
+/* Enhanced Homepage Styles - Modern Travel Dashboard */
 
 /* Main layout structure */
 .travel-app-homepage {
@@ -7,305 +7,351 @@
     gap: 1.5rem;
 }
 
-/* Hero banner section - Simple blue gradient */
+/* Enhanced Hero Banner - Simple and clean */
 .hero-banner {
-    background: linear-gradient(135deg, #1a73e8 0%, #6c5ce7 100%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    border-radius: 0.75rem;
-    height: 160px;
-    display: flex;
-    align-items: center;
+    border-radius: 1rem;
     padding: 2rem;
-    margin-bottom: 1rem;
+    position: relative;
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
+    /* Ensure completely clean background */
+    background-attachment: local;
+    background-origin: border-box;
+    background-clip: border-box;
 }
 
 .hero-content {
-    width: 100%;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2rem;
 }
 
-.hero-content h1 {
-    font-size: 2rem;
+.hero-header {
+    flex: 1;
+    min-width: 300px;
+}
+
+.hero-header h1 {
+    font-size: 2.5rem;
     font-weight: 700;
     margin-bottom: 0.5rem;
+    color: white;
 }
 
 .subtitle {
     font-size: 1.25rem;
     margin-bottom: 1.5rem;
     font-weight: 300;
+    opacity: 0.9;
 }
 
 .quick-actions {
-    margin-top: 1rem;
+    display: flex;
+    gap: 1rem;
 }
 
-/* Two-column layout for main content */
-.dashboard-content {
-    display: grid;
-    grid-template-columns: 1fr 1.5fr;
-    gap: 1.5rem;
-}
-
-@media (max-width: 1024px) {
-    .dashboard-content {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* Stats overview styles */
-.stats-container {
+/* Hero Stats Integration - 2x2 Grid Layout */
+.hero-stats {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
-    padding: 0.5rem;
+    flex: 1;
+    min-width: 400px;
+    max-width: 500px; /* Limit max width */
 }
 
-.stat-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+.stat-card {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: none;
+    border-radius: 0.75rem;
     padding: 1rem;
-    background-color: #f8f9fa;
-    border-radius: 0.5rem;
-    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+    width: 100%; /* Full width of grid cell */
+    min-height: 60px; /* Minimum height for consistency */
 }
 
-.stat-item:hover {
+.stat-card:hover {
+    background: rgba(255, 255, 255, 0.25);
     transform: translateY(-2px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
-.stat-label {
-    font-size: 0.875rem;
-    color: #6b7280;
-    margin-bottom: 0.5rem;
-}
-
-.stat-value {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #1a73e8;
-}
-
-/* Map container styling - fixed height and centered */
-.map-container {
-    height: 300px;
+.stat-icon {
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.2);
     border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+}
+
+.stat-content {
+    flex: 1;
     overflow: hidden;
 }
 
-/* Countries grid styling */
-.countries-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    padding: 0.5rem;
+.stat-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.country-badge {
-    display: flex;
-    align-items: center;
-    padding: 0.5rem;
-    background-color: #f3f4f6;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-}
-
-.country-badge:hover {
-    background-color: #e6f2ff;
-    transform: translateY(-2px);
-}
-
-.country-flag {
-    font-size: 1.2rem;
-    margin-right: 0.5rem;
-}
-
-.country-name {
-    font-size: 0.85rem;
+.stat-label {
+    font-size: 0.75rem;
+    opacity: 0.9;
+    text-transform: uppercase;
     font-weight: 500;
+    letter-spacing: 0.5px;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.empty-countries-state {
+/* Main Content Area */
+.main-content {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 2rem 1rem;
-    color: #6b7280;
+    gap: 1.5rem;
 }
 
-/* Timeline component styling */
-.timeline-wrapper {
-    padding: 0.5rem;
+/* Timeline Section */
+.timeline-section {
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
 }
 
-.timeline {
+/* Compact Trip Cards */
+.trip-cards-container {
+    padding: 1rem;
+}
+
+.trip-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.5rem;
+}
+
+.compact-trip-card {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
+    transition: all 0.3s ease;
     position: relative;
-    padding: 0;
-    list-style: none;
-    margin: 0;
+    overflow: hidden;
 }
 
-.timeline::before {
+.compact-trip-card::before {
     content: '';
     position: absolute;
     top: 0;
-    bottom: 0;
-    left: 16px;
-    width: 3px;
-    background-color: #e5e7eb;
-    z-index: 0;
-}
-
-.timeline > li {
-    position: relative;
-    margin-bottom: 1.5rem;
-    padding-left: 40px;
-}
-
-.timeline > li:last-child {
-    margin-bottom: 0;
-}
-
-.timeline-badge {
-    position: absolute;
     left: 0;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    text-align: center;
-    line-height: 32px;
-    background-color: #1a73e8;
-    color: white;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, #667eea, #764ba2);
+    transform: scaleY(0);
+    transition: transform 0.3s ease;
 }
 
-.timeline-content {
-    padding: 1rem;
-    background-color: white;
-    border-radius: 0.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    position: relative;
-    cursor: pointer;
-    transition: all 0.2s ease;
+.compact-trip-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
-.timeline-content:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+.compact-trip-card:hover::before {
+    transform: scaleY(1);
 }
 
-.timeline-header {
+.trip-card-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.75rem;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.trip-info {
+    flex: 1;
 }
 
 .trip-name {
-    font-weight: 700;
-    font-size: 1.125rem;
-    margin: 0;
-    color: #1a1a1a;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+    line-height: 1.2;
 }
 
-.trip-dates, .trip-location {
+.trip-destination {
     font-size: 0.875rem;
     color: #6b7280;
-    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.trip-countdown {
-    margin-top: 0.5rem;
+.trip-destination::before {
+    content: '📍';
+    font-size: 0.75rem;
+}
+
+/* Trip Card Body */
+.trip-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.trip-dates {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.date-item, .countdown {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     font-size: 0.875rem;
+    color: #4b5563;
+}
+
+.date-icon, .countdown-icon {
+    color: #667eea;
 }
 
 .countdown-value {
-    font-weight: 700;
-    color: #1a73e8;
+    font-weight: 600;
+    color: #667eea;
 }
 
-/* Custom badge styling */
-lightning-badge.badge-planned {
-    background-color: #1a73e8;
-    color: white;
-    padding: 0.25rem 0.5rem;
-    border-radius: 1rem;
-    font-size: 0.75rem;
-    text-transform: uppercase;
+/* Compact Progress Bar */
+.compact-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
-lightning-badge.badge-in-progress {
-    background-color: #ffab00;
-    color: #1a1a1a;
-    padding: 0.25rem 0.5rem;
-    border-radius: 1rem;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-}
-
-lightning-badge.badge-completed {
-    background-color: #34a853;
-    color: white;
-    padding: 0.25rem 0.5rem;
-    border-radius: 1rem;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-}
-
-/* Progress bar styling */
-.progress-container {
-    margin-top: 0.75rem;
-}
-
-.progress-header {
+.progress-labels {
     display: flex;
     justify-content: space-between;
-    font-size: 0.75rem;
-    color: #6b7280;
-    margin-bottom: 0.25rem;
+    align-items: center;
 }
 
-.custom-progress-container {
+.progress-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.progress-amount {
+    font-size: 0.75rem;
+    color: #374151;
+    font-weight: 600;
+}
+
+.compact-progress-bar {
     height: 6px;
     background-color: #e5e7eb;
     border-radius: 3px;
     overflow: hidden;
-}
-
-.custom-progress-bar {
     position: relative;
-    height: 100%;
-    width: 100%;
 }
 
-.custom-progress-value {
-    display: block;
+.compact-progress-fill {
     height: 100%;
+    border-radius: 3px;
     transition: width 0.3s ease;
-    background-color: #1a73e8;
+    position: relative;
 }
 
-/* Trip types styling */
-.trip-upcoming .timeline-badge {
-    background-color: #1a73e8;
+.compact-progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.4), 
+        transparent
+    );
+    animation: shimmer 2s infinite;
 }
 
-.trip-in-progress .timeline-badge {
-    background-color: #ffab00;
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
 }
 
-.trip-completed .timeline-badge {
-    background-color: #34a853;
+/* Status Badges */
+lightning-badge.badge-planned {
+    background-color: #667eea;
+    color: white;
 }
 
-/* Empty state styling */
+lightning-badge.badge-in-progress {
+    background-color: #f59e0b;
+    color: white;
+}
+
+lightning-badge.badge-completed {
+    background-color: #10b981;
+    color: white;
+}
+
+/* World Map Section - Fixed padding and spacing */
+.world-map-section {
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.world-map-container {
+    height: 500px;
+    position: relative;
+    /* Remove padding to eliminate empty space */
+    padding: 0;
+    margin: 0;
+}
+
+/* Fix for map container spacing */
+.world-map-container .slds-p-around_medium {
+    padding: 0 !important;
+}
+
+.world-map-container lightning-card {
+    height: 100%;
+}
+
+.world-map-container .map-container {
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Empty State Styling */
 .empty-state {
     display: flex;
     flex-direction: column;
@@ -313,117 +359,132 @@ lightning-badge.badge-completed {
     justify-content: center;
     text-align: center;
     padding: 3rem 1rem;
-    background-color: #f8f9fa;
-    border-radius: 0.5rem;
+    background: linear-gradient(
+        135deg,
+        rgba(102, 126, 234, 0.05) 0%,
+        rgba(118, 75, 162, 0.05) 100%
+    );
+    border-radius: 1rem;
+    border: 2px dashed #d1d5db;
+    transition: all 0.3s ease;
+}
+
+.empty-state:hover {
+    border-color: #667eea;
+    background: linear-gradient(
+        135deg,
+        rgba(102, 126, 234, 0.1) 0%,
+        rgba(118, 75, 162, 0.1) 100%
+    );
 }
 
 .empty-state h3 {
     font-size: 1.25rem;
     font-weight: 600;
     margin: 1rem 0 0.5rem;
+    color: #374151;
 }
 
 .empty-state p {
     color: #6b7280;
     margin-bottom: 1rem;
+    font-size: 0.875rem;
 }
 
-/* Timeline footer styling */
-.timeline-footer {
-    margin-top: 0.75rem;
-    border-top: 1px solid #f3f4f6;
-    padding-top: 0.75rem;
+/* Loading States */
+.loading-skeleton {
+    background: linear-gradient(
+        90deg,
+        #f0f0f0 25%,
+        #e0e0e0 50%,
+        #f0f0f0 75%
+    );
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .stats-container {
-        grid-template-columns: 1fr;
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .hero-stats {
+        max-width: 450px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .hero-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
     }
     
-    .hero-content h1 {
-        font-size: 1.5rem;
+    .hero-stats {
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    
+    .trip-cards-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-banner {
+        padding: 1.5rem;
+    }
+    
+    .hero-header h1 {
+        font-size: 2rem;
     }
     
     .subtitle {
         font-size: 1rem;
     }
     
-    .timeline-content {
-        padding: 0.75rem;
+    .hero-stats {
+        grid-template-columns: 1fr;
+        max-width: 300px;
+    }
+    
+    .compact-trip-card {
+        padding: 1rem;
+    }
+    
+    .world-map-container {
+        height: 350px;
     }
 }
-.expense-overview {
-    padding: 0.5rem;
+
+@media (max-width: 480px) {
+    .hero-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-card {
+        min-height: 50px;
+    }
+    
+    .stat-value {
+        font-size: 1.1rem;
+    }
+    
+    .stat-label {
+        font-size: 0.7rem;
+    }
 }
 
-.expense-summary {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-}
-
-.summary-item {
-    flex: 1;
-    text-align: center;
-    padding: 0.75rem;
-    background-color: #f8f9fa;
-    border-radius: 0.5rem;
-    margin: 0 0.5rem;
-}
-
-.summary-label {
-    font-size: 0.875rem;
-    color: #6b7280;
-    margin-bottom: 0.5rem;
-}
-
-.summary-value {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #1a73e8;
-}
-
-.expense-categories {
-    margin-top: 1rem;
-}
-
-.categories-heading {
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 0.75rem;
-    color: #1a1a1a;
-}
-
-.category-item {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 0.75rem;
-}
-
-.category-name {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.875rem;
-    margin-bottom: 0.25rem;
-}
-
-.category-amount {
-    font-size: 0.875rem;
-    text-align: right;
-    color: #6b7280;
-}
-
-.category-bar {
-    height: 8px;
-    background-color: #e5e7eb;
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 0.25rem;
-}
-
-.category-progress {
-    height: 100%;
-    border-radius: 4px;
-    transition: width 0.3s ease;
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }

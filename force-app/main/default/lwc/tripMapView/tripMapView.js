@@ -21,20 +21,24 @@ export default class TripMapView extends LightningElement {
     mapMarkers = [];
     error;
     
-    // Map configuration - setting to show the entire world map
+    // Map configuration - better centered for world view
     mapCenter = {
         location: {
-            // Center point that shows the entire world map
-            Latitude: 8,
-            Longitude: 30
+            // Better center point for world map - slightly more north and centered
+            Latitude: 20,
+            Longitude: 0
         }
     };
     
     mapOptions = {
-        zoomLevel: 1,          // Lower zoom level to see the entire world
+        zoomLevel: 1,          // Better zoom level for full world view
         listView: 'hidden',
         markerTitleField: 'title',
-        markerDescriptionField: 'description'
+        markerDescriptionField: 'description',
+        // Additional options to improve map display
+        disableDefaultUI: false,
+        showCompass: false,
+        showTraffic: false
     };
     
     @wire(getVisitedCountries)
@@ -71,12 +75,57 @@ export default class TripMapView extends LightningElement {
                     },
                     title: country.countryName,
                     description: `You've visited ${country.countryName}`,
-                    // Use standard pins that will appear in red like in Image 2
+                    // Use standard pins that will appear in red
                     icon: 'standard:location'
                 };
             }
             return null;
         }).filter(marker => marker !== null);
+        
+        // If we have markers, adjust the center to better fit the visited countries
+        if (this.mapMarkers.length > 0) {
+            this.adjustMapCenter();
+        }
+    }
+    
+    // Adjust map center based on visited countries
+    adjustMapCenter() {
+        if (this.mapMarkers.length === 0) return;
+        
+        // Calculate the center point of all visited countries
+        let totalLat = 0;
+        let totalLng = 0;
+        
+        this.mapMarkers.forEach(marker => {
+            totalLat += marker.location.Latitude;
+            totalLng += marker.location.Longitude;
+        });
+        
+        const avgLat = totalLat / this.mapMarkers.length;
+        const avgLng = totalLng / this.mapMarkers.length;
+        
+        // Use the calculated center but keep it reasonable for world view
+        this.mapCenter = {
+            location: {
+                Latitude: Math.max(-60, Math.min(60, avgLat)), // Clamp between -60 and 60
+                Longitude: avgLng
+            }
+        };
+        
+        // Adjust zoom level based on spread of countries
+        const latSpread = Math.max(...this.mapMarkers.map(m => m.location.Latitude)) - 
+                         Math.min(...this.mapMarkers.map(m => m.location.Latitude));
+        const lngSpread = Math.max(...this.mapMarkers.map(m => m.location.Longitude)) - 
+                         Math.min(...this.mapMarkers.map(m => m.location.Longitude));
+        
+        // Adjust zoom based on spread
+        if (latSpread > 100 || lngSpread > 150) {
+            this.mapOptions.zoomLevel = 1; // World view
+        } else if (latSpread > 50 || lngSpread > 80) {
+            this.mapOptions.zoomLevel = 2; // Continental view
+        } else {
+            this.mapOptions.zoomLevel = 3; // Regional view
+        }
     }
     
     getFlagEmoji(countryCode) {

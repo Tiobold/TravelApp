@@ -14,19 +14,7 @@
                     markers-title="Visited Countries"
                     list-view={mapOptions.listView}>
                 </lightning-map>
-            </div>
-            
-            <!-- Country List -->
-            <div class="slds-grid slds-wrap slds-m-top_medium">
-                <template for:each={countryList} for:item="country">
-                    <div key={country.id} class="slds-col slds-size_1-of-2 slds-medium-size_1-of-3 slds-large-size_1-of-4 slds-p-around_xx-small">
-                        <div class="country-badge">
-                            <span class="country-flag">{country.flag}</span>
-                            <span class="country-name">{country.name}</span>
-                        </div>
-                    </div>
-                </template>
-            </div>
+            </div>        
         </div>
     </lightning-card>
 </template>

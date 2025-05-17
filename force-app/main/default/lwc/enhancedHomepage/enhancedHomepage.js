@@ -18,6 +18,8 @@ export default class EnhancedHomepage extends NavigationMixin(LightningElement) 
     @track tripStats = {};
     @track countries = [];
     @track hasFilterApplied = false;
+    @track totalDaysTravel = 0;
+    @track averageTripDuration = 0;
     
     // Expense overview data
     @track currentMonthExpenses = 0;
@@ -84,10 +86,28 @@ export default class EnhancedHomepage extends NavigationMixin(LightningElement) 
     processTrips(tripsData) {
         const today = new Date();
         
+        // Reset statistics
+        let totalDays = 0;
+        let completedTrips = 0;
+        
         this.trips = tripsData.map(trip => {
             // Format dates
             const startDate = new Date(trip.Start_Date__c);
             const endDate = new Date(trip.End_Date__c);
+            
+            // Calculate trip duration in days
+            const tripDurationMs = endDate.getTime() - startDate.getTime();
+            const tripDurationDays = Math.ceil(tripDurationMs / (1000 * 3600 * 24));
+            
+            // Add to total days if trip is completed or in progress
+            if (endDate <= today) {
+                totalDays += tripDurationDays;
+                completedTrips++;
+            } else if (startDate <= today && endDate > today) {
+                // For trips in progress, count days until today
+                const daysElapsed = Math.ceil((today.getTime() - startDate.getTime()) / (1000 * 3600 * 24));
+                totalDays += Math.max(0, daysElapsed);
+            }
             
             // Formatted dates for display
             const options = { month: 'short', day: 'numeric', year: 'numeric' };
@@ -136,11 +156,11 @@ export default class EnhancedHomepage extends NavigationMixin(LightningElement) 
             const budgetPercentage = this.calculateBudgetPercentage(trip);
             
             // Determine color based on percentage
-            let progressColor = '#1a73e8'; // Default blue
+            let progressColor = '#667eea'; // Brand blue
             if (budgetPercentage > 90) {
-                progressColor = '#ea4335'; // Red for > 90%
+                progressColor = '#dc2626'; // Red for > 90%
             } else if (budgetPercentage > 70) {
-                progressColor = '#fbbc04'; // Yellow for > 70%
+                progressColor = '#f59e0b'; // Amber for > 70%
             }
             
             // Create style for progress bar
@@ -161,9 +181,14 @@ export default class EnhancedHomepage extends NavigationMixin(LightningElement) 
                 formattedStartDate,
                 formattedEndDate,
                 formattedBudget,
-                formattedSpent
+                formattedSpent,
+                durationDays: tripDurationDays
             };
         });
+        
+        // Update statistics
+        this.totalDaysTravel = totalDays;
+        this.averageTripDuration = completedTrips > 0 ? Math.round(totalDays / completedTrips) : 0;
         
         // Apply initial filter
         this.applyFilter(this.currentFilter);
@@ -368,5 +393,15 @@ export default class EnhancedHomepage extends NavigationMixin(LightningElement) 
 
     get upcomingTripsCount() {
         return this.tripStats.upcomingTrips || 0;
+    }
+    get totalDaysTravelFormatted() {
+        return this.totalDaysTravel || 0;
+    }
+
+    get averageTripDurationFormatted() {
+        const avgDays = this.averageTripDuration;
+        if (avgDays === 0) return '0 days';
+        if (avgDays === 1) return '1 day';
+        return `${avgDays} days`;
     }
 }

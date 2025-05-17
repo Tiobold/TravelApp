@@ -1,8 +1,52 @@
+/* Fix map container to eliminate empty space and center properly */
 .map-container {
-    height: 300px;
-    margin-bottom: 1.5rem;
-    border-radius: 8px;
+    height: 500px;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
     overflow: hidden;
+    position: relative;
+}
+
+/* Remove any padding from the card content */
+lightning-card .slds-card__body {
+    padding: 0 !important;
+}
+
+/* Ensure the card header has minimal padding */
+lightning-card .slds-card__header {
+    padding: 0.75rem 1rem !important;
+}
+
+/* Ensure the inner div has no padding */
+.slds-p-around_medium {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Make sure lightning-map fills the container completely */
+lightning-map {
+    height: 100% !important;
+    width: 100% !important;
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/* Override any default margins/padding that might cause centering issues */
+lightning-map > div {
+    height: 100% !important;
+    width: 100% !important;
+}
+
+/* Ensure the map fills the full viewport without empty space */
+lightning-map iframe {
+    height: 100% !important;
+    width: 100% !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 .country-badge {
