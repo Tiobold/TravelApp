@@ -1,5 +1,5 @@
 <template>
-    <lightning-card title="Flight Price Alerts" icon-name="utility:notification">
+    <lightning-card title="Flight Price Alerts" icon-name="utility:notification" class="flight-price-alerts">
         <!-- Action Section -->
         <div slot="actions">
             <lightning-button-group>
@@ -32,8 +32,8 @@
                     </div>
                     <div class="summary-item">
                         <span class="summary-label">Monitoring</span>
-                        <span class={isMonitoringScheduled ? 'summary-value status-active' : 'summary-value status-inactive'}>
-                            {isMonitoringScheduled ? 'Scheduled' : 'Not Scheduled'}
+                        <span class={monitoringStatusClass}>
+                            {monitoringStatusText}
                         </span>
                     </div>
                 </div>
@@ -100,16 +100,18 @@
                                 </template>
 
                                 <!-- Recent Notifications -->
-                                <template if:true={alert.Flight_Price_Notifications__r.length}>
-                                    <div class="recent-notifications">
-                                        <h4 class="notifications-title">Recent Notifications</h4>
-                                        <template for:each={alert.Flight_Price_Notifications__r} for:item="notification">
-                                            <div key={notification.Id} class="notification-item">
-                                                <div class="notification-price">€{notification.Price__c}</div>
-                                                <div class="notification-date">{notification.Found_Date__c}</div>
-                                            </div>
-                                        </template>
-                                    </div>
+                                <template if:true={alert.Flight_Price_Notifications__r}>
+                                    <template if:true={alert.Flight_Price_Notifications__r.length}>
+                                        <div class="recent-notifications">
+                                            <h4 class="notifications-title">Recent Notifications</h4>
+                                            <template for:each={alert.Flight_Price_Notifications__r} for:item="notification">
+                                                <div key={notification.Id} class="notification-item">
+                                                    <div class="notification-price">€{notification.Price__c}</div>
+                                                    <div class="notification-date">{notification.Found_Date__c}</div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
                                 </template>
                             </div>
 
@@ -380,8 +382,8 @@
                         <div class="status-overview">
                             <div class="status-item">
                                 <span class="status-label">Status:</span>
-                                <span class={isMonitoringScheduled ? 'status-value status-active' : 'status-value status-inactive'}>
-                                    {isMonitoringScheduled ? 'Scheduled' : 'Not Scheduled'}
+                                <span class={monitoringStatusClass}>
+                                    {monitoringStatusText}
                                 </span>
                             </div>
                             <div class="status-item">

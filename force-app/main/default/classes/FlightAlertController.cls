@@ -7,7 +7,7 @@ public with sharing class FlightAlertController {
                 SELECT Id, Name, Origin_Airport__c, Destination_Airport__c, 
                        Departure_Date__c, Return_Date__c, Max_Price__c, Adults__c,
                        Alert_Email__c, Is_Active__c, Last_Check_Date__c, 
-                       Notification_Type__c, Created_Date__c, Last_Good_Price__c,
+                       Notification_Type__c, CreatedDate, Last_Good_Price__c,
                        (SELECT Id, Price__c, Found_Date__c, Flight_Details__c 
                         FROM Flight_Price_Notifications__r 
                         ORDER BY Found_Date__c DESC LIMIT 5)

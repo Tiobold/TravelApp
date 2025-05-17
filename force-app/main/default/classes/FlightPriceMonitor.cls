@@ -175,10 +175,11 @@ public class FlightPriceMonitor implements Database.Batchable<SObject>, Database
     }
     
     /**
-     * Build HTML email body
+     * Build HTML email body - UPDATED to use new URL method
      */
     private String buildEmailBody(Flight_Price_Alert__c alert, List<AmadeusService.FlightOffer> goodFlights) {
-        String baseUrl = URL.getSalesforceBaseUrl().toExternalForm();
+        // Updated to use the new method for getting base URL
+        String baseUrl = URL.getOrgDomainUrl().toExternalForm();
         
         String htmlBody = '<!DOCTYPE html><html><head><style>';
         htmlBody += 'body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }';
