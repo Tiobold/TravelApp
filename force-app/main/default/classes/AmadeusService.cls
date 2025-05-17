@@ -99,8 +99,6 @@ public with sharing class AmadeusService {
         }
     }
     
-    // ... rest of the methods remain the same ...
-    
     /**
      * Search for flights
      */
@@ -185,8 +183,6 @@ public with sharing class AmadeusService {
         }
     }
     
-    // Parse methods remain the same as in the original code...
-    
     // Parse flight search results
     private static FlightSearchResult parseFlightResults(Map<String, Object> responseBody) {
         FlightSearchResult result = new FlightSearchResult();
@@ -216,8 +212,10 @@ public with sharing class AmadeusService {
         
         List<Object> data = (List<Object>) responseBody.get('data');
         if (data != null) {
-            for (Object item : data.size() > 20 ? data.subList(0, 20) : data) {
-                Map<String, Object> hotel = (Map<String, Object>) item;
+            // FIX 1: Properly handle list slicing for limiting results
+            Integer maxResults = Math.min(data.size(), 20);
+            for (Integer i = 0; i < maxResults; i++) {
+                Map<String, Object> hotel = (Map<String, Object>) data[i];
                 HotelOffer hotelOffer = new HotelOffer();
                 
                 hotelOffer.id = (String) hotel.get('hotelId');
@@ -280,8 +278,9 @@ public with sharing class AmadeusService {
         Map<String, Object> price = (Map<String, Object>) offer.get('price');
         if (price != null) {
             String total = (String) price.get('total');
-            String currency = (String) price.get('currency');
-            return currency + ' ' + total;
+            // FIX 2: Use 'currencyCode' instead of reserved keyword 'currency'
+            String currencyCode = (String) price.get('currency');
+            return currencyCode + ' ' + total;
         }
         return '';
     }
