@@ -1,0 +1,450 @@
+<template>
+    <lightning-card title="Flight Price Alerts" icon-name="utility:notification">
+        <!-- Action Section -->
+        <div slot="actions">
+            <lightning-button-group>
+                <lightning-button
+                    variant="neutral"
+                    label="Monitor Status"
+                    icon-name="utility:settings"
+                    onclick={handleOpenMonitoring}>
+                </lightning-button>
+                <lightning-button
+                    variant="brand"
+                    label="Add Alert"
+                    icon-name="utility:add"
+                    onclick={handleCreateAlert}>
+                </lightning-button>
+            </lightning-button-group>
+        </div>
+
+        <div class="slds-p-around_medium">
+            <!-- Summary Stats -->
+            <template if:true={hasAlerts}>
+                <div class="alert-summary slds-m-bottom_medium">
+                    <div class="summary-item">
+                        <span class="summary-label">Active Alerts</span>
+                        <span class="summary-value">{activeAlertsCount}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Alerts</span>
+                        <span class="summary-value">{alerts.length}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Monitoring</span>
+                        <span class={isMonitoringScheduled ? 'summary-value status-active' : 'summary-value status-inactive'}>
+                            {isMonitoringScheduled ? 'Scheduled' : 'Not Scheduled'}
+                        </span>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Alerts List -->
+            <template if:true={hasAlerts}>
+                <div class="alerts-container">
+                    <template for:each={alerts} for:item="alert">
+                        <div key={alert.Id} class="alert-card">
+                            <div class="alert-header">
+                                <div class="alert-route">
+                                    <h3 class="route-text">
+                                        {alert.Origin_Airport__c} → {alert.Destination_Airport__c}
+                                    </h3>
+                                    <div class="route-details">
+                                        <span>Max Price: €{alert.Max_Price__c}</span>
+                                        <span class="separator">•</span>
+                                        <span>{alert.Adults__c} Adult(s)</span>
+                                    </div>
+                                </div>
+                                <div class="alert-toggle">
+                                    <lightning-input
+                                        type="toggle"
+                                        checked={alert.Is_Active__c}
+                                        data-id={alert.Id}
+                                        onchange={handleToggleAlert}>
+                                    </lightning-input>
+                                </div>
+                            </div>
+
+                            <div class="alert-body">
+                                <div class="alert-dates">
+                                    <div class="date-item">
+                                        <lightning-icon icon-name="utility:date_input" size="x-small"></lightning-icon>
+                                        <span>Departure: {alert.Departure_Date__c}</span>
+                                    </div>
+                                    <template if:true={alert.Return_Date__c}>
+                                        <div class="date-item">
+                                            <lightning-icon icon-name="utility:date_input" size="x-small"></lightning-icon>
+                                            <span>Return: {alert.Return_Date__c}</span>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <div class="alert-notifications">
+                                    <div class="notification-info">
+                                        <lightning-icon icon-name="utility:notification" size="x-small"></lightning-icon>
+                                        <span>Notifications: {alert.Notification_Type__c}</span>
+                                    </div>
+                                    <template if:true={alert.Alert_Email__c}>
+                                        <div class="email-info">
+                                            <lightning-icon icon-name="utility:email" size="x-small"></lightning-icon>
+                                            <span>{alert.Alert_Email__c}</span>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <template if:true={alert.Last_Check_Date__c}>
+                                    <div class="last-check">
+                                        <span class="last-check-label">Last checked:</span>
+                                        <span class="last-check-date">{alert.Last_Check_Date__c}</span>
+                                    </div>
+                                </template>
+
+                                <!-- Recent Notifications -->
+                                <template if:true={alert.Flight_Price_Notifications__r.length}>
+                                    <div class="recent-notifications">
+                                        <h4 class="notifications-title">Recent Notifications</h4>
+                                        <template for:each={alert.Flight_Price_Notifications__r} for:item="notification">
+                                            <div key={notification.Id} class="notification-item">
+                                                <div class="notification-price">€{notification.Price__c}</div>
+                                                <div class="notification-date">{notification.Found_Date__c}</div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <div class="alert-actions">
+                                <lightning-button
+                                    variant="neutral"
+                                    label="Test Alert"
+                                    size="small"
+                                    data-id={alert.Id}
+                                    onclick={handleTestAlert}>
+                                </lightning-button>
+                                <lightning-button
+                                    variant="destructive-text"
+                                    label="Delete"
+                                    size="small"
+                                    data-id={alert.Id}
+                                    onclick={handleDeleteAlert}>
+                                </lightning-button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- Empty State -->
+            <template if:false={hasAlerts}>
+                <div class="empty-state">
+                    <lightning-icon icon-name="utility:notification" size="large"></lightning-icon>
+                    <h3>No Flight Alerts Yet</h3>
+                    <p>Set up price alerts to get notified when flights drop below your budget.</p>
+                    <lightning-button
+                        variant="brand"
+                        label="Create Your First Alert"
+                        onclick={handleCreateAlert}>
+                    </lightning-button>
+                </div>
+            </template>
+
+            <!-- Error Display -->
+            <template if:true={error}>
+                <div class="slds-text-color_error slds-m-bottom_small">
+                    Error loading flight alerts: {error.body.message}
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+
+    <!-- Create Alert Modal -->
+    <template if:true={showCreateModal}>
+        <section role="dialog" tabindex="-1" aria-modal="true" aria-labelledby="create-alert-modal" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <lightning-button-icon
+                        icon-name="utility:close"
+                        class="slds-modal__close"
+                        onclick={handleCloseCreateModal}
+                        alternative-text="Close"
+                        title="Close">
+                    </lightning-button-icon>
+                    <h2 id="create-alert-modal" class="slds-modal__title slds-hyphenate">
+                        Create Flight Price Alert
+                    </h2>
+                </header>
+
+                <div class="slds-modal__content slds-p-around_medium" id="create-alert-content">
+                    <div class="create-alert-form">
+                        <!-- Route Section -->
+                        <div class="form-section">
+                            <h3 class="section-title">Flight Route</h3>
+                            <div class="slds-grid slds-gutters">
+                                <!-- Origin Airport -->
+                                <div class="slds-col slds-size_1-of-2 airport-field">
+                                    <lightning-input
+                                        type="text"
+                                        label="From"
+                                        placeholder="Enter airport code"
+                                        value={alertForm.originAirport}
+                                        onchange={handleOriginChange}
+                                        data-field="origin"
+                                        required>
+                                    </lightning-input>
+                                    
+                                    <!-- Origin Suggestions -->
+                                    <template if:true={showOriginSuggestions}>
+                                        <div class="suggestions-dropdown">
+                                            <template for:each={originSuggestions} for:item="suggestion">
+                                                <div key={suggestion.code}
+                                                     class="suggestion-item"
+                                                     data-type="origin"
+                                                     data-code={suggestion.code}
+                                                     data-city={suggestion.city}
+                                                     onclick={handleAirportSuggestionClick}>
+                                                    <div class="suggestion-content">
+                                                        <div class="suggestion-main">
+                                                            <strong>{suggestion.code}</strong> - {suggestion.name}
+                                                        </div>
+                                                        <div class="suggestion-sub">
+                                                            {suggestion.city}, {suggestion.country}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    
+                                    <template if:true={isSearchingOrigin}>
+                                        <div class="searching-indicator">
+                                            <lightning-spinner size="small"></lightning-spinner>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <!-- Destination Airport -->
+                                <div class="slds-col slds-size_1-of-2 airport-field">
+                                    <lightning-input
+                                        type="text"
+                                        label="To"
+                                        placeholder="Enter airport code"
+                                        value={alertForm.destinationAirport}
+                                        onchange={handleDestinationChange}
+                                        data-field="destination"
+                                        required>
+                                    </lightning-input>
+                                    
+                                    <!-- Destination Suggestions -->
+                                    <template if:true={showDestinationSuggestions}>
+                                        <div class="suggestions-dropdown">
+                                            <template for:each={destinationSuggestions} for:item="suggestion">
+                                                <div key={suggestion.code}
+                                                     class="suggestion-item"
+                                                     data-type="destination"
+                                                     data-code={suggestion.code}
+                                                     data-city={suggestion.city}
+                                                     onclick={handleAirportSuggestionClick}>
+                                                    <div class="suggestion-content">
+                                                        <div class="suggestion-main">
+                                                            <strong>{suggestion.code}</strong> - {suggestion.name}
+                                                        </div>
+                                                        <div class="suggestion-sub">
+                                                            {suggestion.city}, {suggestion.country}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    
+                                    <template if:true={isSearchingDestination}>
+                                        <div class="searching-indicator">
+                                            <lightning-spinner size="small"></lightning-spinner>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dates Section -->
+                        <div class="form-section">
+                            <h3 class="section-title">Travel Dates</h3>
+                            <div class="slds-grid slds-gutters">
+                                <div class="slds-col slds-size_1-of-2">
+                                    <lightning-input
+                                        type="date"
+                                        label="Departure Date"
+                                        value={alertForm.departureDate}
+                                        min={minDepartureDate}
+                                        onchange={handleDepartureDateChange}
+                                        required>
+                                    </lightning-input>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    <lightning-input
+                                        type="date"
+                                        label="Return Date (Optional)"
+                                        value={alertForm.returnDate}
+                                        min={minReturnDate}
+                                        onchange={handleReturnDateChange}>
+                                    </lightning-input>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Alert Settings Section -->
+                        <div class="form-section">
+                            <h3 class="section-title">Alert Settings</h3>
+                            <div class="slds-grid slds-gutters">
+                                <div class="slds-col slds-size_1-of-3">
+                                    <lightning-input
+                                        type="number"
+                                        label="Maximum Price (€)"
+                                        value={alertForm.maxPrice}
+                                        min="1"
+                                        step="1"
+                                        formatter="currency"
+                                        onchange={handleMaxPriceChange}
+                                        required>
+                                    </lightning-input>
+                                </div>
+                                <div class="slds-col slds-size_1-of-3">
+                                    <lightning-combobox
+                                        label="Number of Adults"
+                                        value={alertForm.adults}
+                                        options={adultOptions}
+                                        onchange={handleAdultsChange}>
+                                    </lightning-combobox>
+                                </div>
+                                <div class="slds-col slds-size_1-of-3">
+                                    <lightning-combobox
+                                        label="Notification Type"
+                                        value={alertForm.notificationType}
+                                        options={notificationTypeOptions}
+                                        onchange={handleNotificationTypeChange}>
+                                    </lightning-combobox>
+                                </div>
+                            </div>
+                            <div class="slds-m-top_medium">
+                                <lightning-input
+                                    type="email"
+                                    label="Alert Email (Optional)"
+                                    placeholder="Leave blank to use your profile email"
+                                    value={alertForm.alertEmail}
+                                    onchange={handleEmailChange}>
+                                </lightning-input>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <footer class="slds-modal__footer">
+                    <lightning-button
+                        label="Cancel"
+                        onclick={handleCloseCreateModal}>
+                    </lightning-button>
+                    <lightning-button
+                        variant="brand"
+                        label="Create Alert"
+                        onclick={handleSaveAlert}
+                        disabled={isCreating}>
+                    </lightning-button>
+                    <template if:true={isCreating}>
+                        <lightning-spinner size="small"></lightning-spinner>
+                    </template>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+    <!-- Monitoring Status Modal -->
+    <template if:true={showMonitoringModal}>
+        <section role="dialog" tabindex="-1" aria-modal="true" aria-labelledby="monitoring-modal" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <lightning-button-icon
+                        icon-name="utility:close"
+                        class="slds-modal__close"
+                        onclick={handleCloseMonitoring}
+                        alternative-text="Close"
+                        title="Close">
+                    </lightning-button-icon>
+                    <h2 id="monitoring-modal" class="slds-modal__title slds-hyphenate">
+                        Flight Price Monitoring
+                    </h2>
+                </header>
+
+                <div class="slds-modal__content slds-p-around_medium" id="monitoring-content">
+                    <div class="monitoring-status">
+                        <div class="status-overview">
+                            <div class="status-item">
+                                <span class="status-label">Status:</span>
+                                <span class={isMonitoringScheduled ? 'status-value status-active' : 'status-value status-inactive'}>
+                                    {isMonitoringScheduled ? 'Scheduled' : 'Not Scheduled'}
+                                </span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">Next Run:</span>
+                                <span class="status-value">{nextRunTime}</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">Last Run:</span>
+                                <span class="status-value">{lastRunTime}</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">Active Alerts:</span>
+                                <span class="status-value">{activeAlertsCount}</span>
+                            </div>
+                        </div>
+
+                        <div class="monitoring-info slds-m-top_medium">
+                            <h3 class="info-title">How It Works</h3>
+                            <ul class="info-list">
+                                <li>Monitoring runs automatically every day at 8 AM</li>
+                                <li>Checks all active alerts for price changes</li>
+                                <li>Sends notifications when flights are found below your price limit</li>
+                                <li>You can test individual alerts or run monitoring manually</li>
+                            </ul>
+                        </div>
+
+                        <template if:true={monitoringStatus.recentNotifications}>
+                            <div class="recent-notifications slds-m-top_medium">
+                                <h3 class="notifications-title">Recent Notifications</h3>
+                                <template for:each={monitoringStatus.recentNotifications} for:item="notification">
+                                    <div key={notification.Id} class="notification-item">
+                                        <div class="notification-alert">{notification.Flight_Price_Alert__r.Name}</div>
+                                        <div class="notification-details">
+                                            <span class="notification-price">€{notification.Price__c}</span>
+                                            <span class="notification-date">{notification.Found_Date__c}</span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <footer class="slds-modal__footer">
+                    <lightning-button
+                        label="Run Now"
+                        variant="neutral"
+                        onclick={handleRunMonitoringNow}>
+                    </lightning-button>
+                    <template if:false={isMonitoringScheduled}>
+                        <lightning-button
+                            label="Schedule Monitoring"
+                            variant="brand"
+                            onclick={handleScheduleMonitoring}>
+                        </lightning-button>
+                    </template>
+                    <lightning-button
+                        label="Close"
+                        onclick={handleCloseMonitoring}>
+                    </lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>
