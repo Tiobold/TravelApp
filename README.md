@@ -83,12 +83,15 @@ The application uses a sophisticated data model with the following key objects:
   ```bash
   git clone https://github.com/your-username/salesforce-travel-app.git
   cd salesforce-travel-app
+  ```
 2. **Authorize your Salesforce org**
   ```bash
   sfdx auth:web:login -a YourOrgAlias
+  ```
 3. **Deploy the application**
   ```bash
   sfdx force:source:deploy -p force-app --wait 10
+  ```
 4. **Configure API Settings**
    - Navigate to Setup → Custom Settings
    - Configure Google Maps API Settings with your API key
@@ -98,9 +101,11 @@ The application uses a sophisticated data model with the following key objects:
 5. **Assign Permissions**
   ```bash
    sfdx force:user:permset:assign -n Travel_App_User
+   ```
 6. **Import Sample Data** (optional)
   ```bash
    sfdx force:data:tree:import -p data/sample-data-plan.json
+   ```
 
 ## 🔑 API Configuration
 
@@ -130,12 +135,15 @@ For destination content and travel recommendations:
 1. **Create a scratch org**
   ```bash
    sfdx force:org:create -f config/project-scratch-def.json -a TravelAppDev
+   ```
 2. **Push source to scratch org**
    ```bash
    sfdx force:source:push
+   ```
 3. **Run tests**
    ```bash
    sfdx force:apex:test:run --testlevel RunLocalTests
+   ```
 ### Development Workflow
 - Use Visual Studio Code with Salesforce Extension Pack
 - Follow Salesforce best practices for LWC development
