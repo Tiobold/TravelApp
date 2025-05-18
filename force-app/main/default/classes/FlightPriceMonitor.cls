@@ -12,7 +12,7 @@ public class FlightPriceMonitor implements Database.Batchable<SObject>, Database
                    Origin_Airport__c, Destination_Airport__c, Max_Price__c, 
                    Departure_Date__c, Return_Date__c, Adults__c, 
                    Alert_Email__c, Last_Check_Date__c, Is_Active__c,
-                   Trip__r.OwnerId, Notification_Type__c
+                   Trip__r.OwnerId, Notification_Type__c, CurrencyIsoCode
             FROM Flight_Price_Alert__c 
             WHERE Is_Active__c = true 
             AND (Last_Check_Date__c = null OR Last_Check_Date__c < TODAY)
@@ -23,6 +23,7 @@ public class FlightPriceMonitor implements Database.Batchable<SObject>, Database
     public void execute(Database.BatchableContext context, List<Flight_Price_Alert__c> alerts) {
         List<Flight_Price_Alert__c> alertsToUpdate = new List<Flight_Price_Alert__c>();
         List<Messaging.SingleEmailMessage> emailsToSend = new List<Messaging.SingleEmailMessage>();
+        List<Flight_Price_Notification__c> notificationsToInsert = new List<Flight_Price_Notification__c>();
         
         for (Flight_Price_Alert__c alert : alerts) {
             try {
@@ -43,6 +44,12 @@ public class FlightPriceMonitor implements Database.Batchable<SObject>, Database
                         Decimal flightPrice = extractPriceFromString(flight.price);
                         if (flightPrice != null && flightPrice <= alert.Max_Price__c) {
                             goodFlights.add(flight);
+                            
+                            // Create notification record for each good flight found
+                            Flight_Price_Notification__c notification = createNotificationRecord(alert, flight, flightPrice);
+                            if (notification != null) {
+                                notificationsToInsert.add(notification);
+                            }
                         }
                     }
                     
@@ -61,6 +68,16 @@ public class FlightPriceMonitor implements Database.Batchable<SObject>, Database
                 // Continue with other alerts even if one fails
                 alert.Last_Check_Date__c = Date.today();
                 alertsToUpdate.add(alert);
+            }
+        }
+        
+        // Insert notification records
+        if (!notificationsToInsert.isEmpty()) {
+            try {
+                insert notificationsToInsert;
+                System.debug('Successfully created ' + notificationsToInsert.size() + ' flight price notification records');
+            } catch (Exception e) {
+                System.debug('Error inserting flight price notifications: ' + e.getMessage());
             }
         }
         
@@ -85,6 +102,38 @@ public class FlightPriceMonitor implements Database.Batchable<SObject>, Database
     
     public void finish(Database.BatchableContext context) {
         System.debug('Flight price monitoring batch completed at: ' + System.now());
+    }
+    
+    /**
+     * Create a Flight_Price_Notification__c record for a good flight found
+     */
+    private Flight_Price_Notification__c createNotificationRecord(Flight_Price_Alert__c alert, AmadeusService.FlightOffer flight, Decimal flightPrice) {
+        try {
+            Flight_Price_Notification__c notification = new Flight_Price_Notification__c();
+            
+            // Set the lookup to the parent alert
+            notification.Flight_Price_Alert__c = alert.Id;
+            
+            // Set the found date to today
+            notification.Found_Date__c = Date.today();
+            
+            // Set the price
+            notification.Price__c = flightPrice;
+            
+            // Set currency from the alert (if available)
+            if (String.isNotBlank(alert.CurrencyIsoCode)) {
+                notification.CurrencyIsoCode = alert.CurrencyIsoCode;
+            }
+            
+            // Note: Name field will be auto-generated or set by the system
+            // If Name is a formula field or auto-number, don't set it manually
+            
+            return notification;
+            
+        } catch (Exception e) {
+            System.debug('Error creating notification record: ' + e.getMessage());
+            return null;
+        }
     }
     
     /**
@@ -299,5 +348,68 @@ public class FlightPriceMonitor implements Database.Batchable<SObject>, Database
      */
     public static void runFlightPriceMonitorNow() {
         Database.executeBatch(new FlightPriceMonitor(), 10);
+    }
+    
+    /**
+     * Static method to get recent notifications for an alert
+     */
+    public static List<Flight_Price_Notification__c> getRecentNotifications(Id alertId, Integer daysBack) {
+        if (daysBack == null) daysBack = 30;
+        
+        Date cutoffDate = Date.today().addDays(-daysBack);
+        
+        return [
+            SELECT Id, Name, Price__c, Found_Date__c, CurrencyIsoCode, CreatedDate
+            FROM Flight_Price_Notification__c 
+            WHERE Flight_Price_Alert__c = :alertId 
+            AND Found_Date__c >= :cutoffDate
+            ORDER BY Found_Date__c DESC, CreatedDate DESC
+            LIMIT 100
+        ];
+    }
+    
+    /**
+     * Static method to get notification statistics for an alert
+     */
+    public static Map<String, Object> getNotificationStats(Id alertId) {
+        Map<String, Object> stats = new Map<String, Object>();
+        
+        try {
+            // Get total count
+            Integer totalCount = [
+                SELECT COUNT() 
+                FROM Flight_Price_Notification__c 
+                WHERE Flight_Price_Alert__c = :alertId
+            ];
+            
+            // Get count in last 30 days
+            Date cutoffDate = Date.today().addDays(-30);
+            Integer recentCount = [
+                SELECT COUNT() 
+                FROM Flight_Price_Notification__c 
+                WHERE Flight_Price_Alert__c = :alertId 
+                AND Found_Date__c >= :cutoffDate
+            ];
+            
+            // Get lowest price found
+            List<AggregateResult> minPriceResult = [
+                SELECT MIN(Price__c) minPrice
+                FROM Flight_Price_Notification__c 
+                WHERE Flight_Price_Alert__c = :alertId
+                AND Price__c != null
+            ];
+            
+            stats.put('totalNotifications', totalCount);
+            stats.put('recentNotifications', recentCount);
+            
+            if (!minPriceResult.isEmpty() && minPriceResult[0].get('minPrice') != null) {
+                stats.put('lowestPrice', minPriceResult[0].get('minPrice'));
+            }
+            
+        } catch (Exception e) {
+            System.debug('Error getting notification stats: ' + e.getMessage());
+        }
+        
+        return stats;
     }
 }
