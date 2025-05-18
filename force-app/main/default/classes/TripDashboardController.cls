@@ -69,7 +69,7 @@ public with sharing class TripDashboardController {
         for (Trip__c trip : [
             SELECT Id, Country__c 
             FROM Trip__c 
-            WHERE Country__c != null
+            WHERE Country__c != null AND Status__c = 'Completed'
         ]) {
             if (!uniqueCountries.contains(trip.Country__c)) {
                 uniqueCountries.add(trip.Country__c);

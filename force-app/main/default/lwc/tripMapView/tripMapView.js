@@ -3,17 +3,32 @@ import getVisitedCountries from '@salesforce/apex/TripDashboardController.getVis
 
 // Map of country names to coordinates (latitude, longitude)
 const COUNTRY_COORDINATES = {
+    'Switzerland': { latitude: 46.818188, longitude: 8.227512 },
+    'Netherlands': { latitude: 52.132633, longitude: 5.291266 },
+    'United Kingdom': { latitude: 55.378051, longitude: -3.435973 },
+    'Spain': { latitude: 40.463667, longitude: -3.74922 },
+    'Poland': { latitude: 51.919438, longitude: 19.145136 },
+    'Austria': { latitude: 47.516231, longitude: 14.550072 },
+    'Slovakia': { latitude: 48.669026, longitude: 19.699024 },
+    'Slovenia': { latitude: 46.151241, longitude: 14.995463 },
+    'Morocco': { latitude: 31.791492, longitude: -7.09262 },
+    'Belgium': { latitude: 50.850346, longitude: 4.351721 },
+    'Italy': { latitude: 41.87194, longitude: 12.56738 },
+    'Germany': { latitude: 51.165691, longitude: 10.451526 },
+    'Ireland': { latitude: 53.41291, longitude: -8.24389 },
+    'Iceland': { latitude: 64.963051, longitude: -19.020835 },
+    'Croatia': { latitude: 45.1, longitude: 15.2 },
+    'Czech Republic': { latitude: 49.75, longitude: 15.5 },
+    'Tanzania': { latitude: -6.369028, longitude: 34.888822 },
+    'Kenya': { latitude: -0.023559, longitude: 37.906193 },
+    'Singapore': { latitude: 1.352083, longitude: 103.819836 },
+    'China': { latitude: 35.86166, longitude: 104.195397 },
+    'United States': { latitude: 37.09024, longitude: -95.712891 },
     'France': { latitude: 46.603354, longitude: 1.888334 },
     'Hungary': { latitude: 47.162494, longitude: 19.503304 },
     'Vietnam': { latitude: 14.058324, longitude: 108.277199 },
-    'Singapore': { latitude: 1.352083, longitude: 103.819836 },
     'Japan': { latitude: 36.204824, longitude: 138.252924 },
-    'Indonesia': { latitude: -0.789275, longitude: 113.921327 },
-    'Italy': { latitude: 41.87194, longitude: 12.56738 },
-    'Spain': { latitude: 40.463667, longitude: -3.74922 },
-    'Netherlands': { latitude: 52.132633, longitude: 5.291266 },
-    'United States': { latitude: 37.09024, longitude: -95.712891 }
-    // Add more as needed
+    'Indonesia': { latitude: -0.789275, longitude: 113.921327 }
 };
 
 export default class TripMapView extends LightningElement {
@@ -21,24 +36,13 @@ export default class TripMapView extends LightningElement {
     mapMarkers = [];
     error;
     
-    // Map configuration - better centered for world view
-    mapCenter = {
-        location: {
-            // Better center point for world map - slightly more north and centered
-            Latitude: 20,
-            Longitude: 0
-        }
-    };
+    // Remove mapCenter - let Lightning Map auto-center based on markers
     
     mapOptions = {
-        zoomLevel: 1,          // Better zoom level for full world view
+        zoomLevel: 2,
         listView: 'hidden',
         markerTitleField: 'title',
-        markerDescriptionField: 'description',
-        // Additional options to improve map display
-        disableDefaultUI: false,
-        showCompass: false,
-        showTraffic: false
+        markerDescriptionField: 'description'
     };
     
     @wire(getVisitedCountries)
@@ -63,7 +67,7 @@ export default class TripMapView extends LightningElement {
             };
         });
         
-        // Process countries for the map markers with red marker styling
+        // Process countries for the map markers
         this.mapMarkers = data.map(country => {
             const coordinates = COUNTRY_COORDINATES[country.countryName];
             
@@ -75,62 +79,18 @@ export default class TripMapView extends LightningElement {
                     },
                     title: country.countryName,
                     description: `You've visited ${country.countryName}`,
-                    // Use standard pins that will appear in red
                     icon: 'standard:location'
                 };
             }
             return null;
         }).filter(marker => marker !== null);
         
-        // If we have markers, adjust the center to better fit the visited countries
-        if (this.mapMarkers.length > 0) {
-            this.adjustMapCenter();
-        }
-    }
-    
-    // Adjust map center based on visited countries
-    adjustMapCenter() {
-        if (this.mapMarkers.length === 0) return;
-        
-        // Calculate the center point of all visited countries
-        let totalLat = 0;
-        let totalLng = 0;
-        
-        this.mapMarkers.forEach(marker => {
-            totalLat += marker.location.Latitude;
-            totalLng += marker.location.Longitude;
-        });
-        
-        const avgLat = totalLat / this.mapMarkers.length;
-        const avgLng = totalLng / this.mapMarkers.length;
-        
-        // Use the calculated center but keep it reasonable for world view
-        this.mapCenter = {
-            location: {
-                Latitude: Math.max(-60, Math.min(60, avgLat)), // Clamp between -60 and 60
-                Longitude: avgLng
-            }
-        };
-        
-        // Adjust zoom level based on spread of countries
-        const latSpread = Math.max(...this.mapMarkers.map(m => m.location.Latitude)) - 
-                         Math.min(...this.mapMarkers.map(m => m.location.Latitude));
-        const lngSpread = Math.max(...this.mapMarkers.map(m => m.location.Longitude)) - 
-                         Math.min(...this.mapMarkers.map(m => m.location.Longitude));
-        
-        // Adjust zoom based on spread
-        if (latSpread > 100 || lngSpread > 150) {
-            this.mapOptions.zoomLevel = 1; // World view
-        } else if (latSpread > 50 || lngSpread > 80) {
-            this.mapOptions.zoomLevel = 2; // Continental view
-        } else {
-            this.mapOptions.zoomLevel = 3; // Regional view
-        }
+        console.log('Map markers created:', this.mapMarkers.length);
     }
     
     getFlagEmoji(countryCode) {
         if (!countryCode || countryCode === 'XX' || countryCode.length !== 2) {
-            return '🌍'; // Default globe for unknown countries
+            return '🌍';
         }
         
         try {
@@ -141,7 +101,7 @@ export default class TripMapView extends LightningElement {
             return String.fromCodePoint(...codePoints);
         } catch (e) {
             console.warn(`Could not create flag emoji for ${countryCode}`, e);
-            return '🌍'; // Fallback
+            return '🌍';
         }
     }
 }

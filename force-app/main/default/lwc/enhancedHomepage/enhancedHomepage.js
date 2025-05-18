@@ -8,6 +8,7 @@ import getTripStats from '@salesforce/apex/TripDashboardController.getTripStats'
 import getVisitedCountries from '@salesforce/apex/TripDashboardController.getVisitedCountries';
 import getExpenseBreakdown from '@salesforce/apex/TripDashboardController.getExpenseBreakdown';
 import getTripCompanions from '@salesforce/apex/TripCompanionController.getTripCompanions';
+import getTravelStats from '@salesforce/apex/TravelStatsController.getTravelStats';
 
 export default class EnhancedHomepage extends NavigationMixin(LightningElement) {
     @track trips = [];
@@ -19,6 +20,22 @@ export default class EnhancedHomepage extends NavigationMixin(LightningElement) 
     @track tripStats = {};
     @track countries = [];
     @track hasFilterApplied = false;
+    @track showExpandedStats = false;
+    
+    // Enhanced travel statistics
+    @track travelStats = {};
+    @track animatedStats = {
+        totalTrips: 0,
+        countriesVisited: 0,
+        totalDaysAbroad: 0,
+        totalDistance: 0,
+        carbonFootprint: 0,
+        travelStreak: 0
+    };
+    
+    // Animation control
+    animationDuration = 2000;
+    animationStartTime = null;
     
     // Expense overview data
     @track currentMonthExpenses = 0;
@@ -31,7 +48,19 @@ export default class EnhancedHomepage extends NavigationMixin(LightningElement) 
     countriesVisited = 0;
     
     wiredTripsResult;
+    wiredTravelStatsResult;
     
+    @wire(getTravelStats)
+    wiredTravelStats(result) {
+        this.wiredTravelStatsResult = result;
+        if (result.data) {
+            this.travelStats = result.data;
+            this.startStatsAnimations();
+        } else if (result.error) {
+            console.error('Error loading travel stats:', result.error);
+        }
+    }
+
     @wire(getUserTrips)
     wiredTrips(result) {
         this.wiredTripsResult = result;
@@ -68,23 +97,72 @@ export default class EnhancedHomepage extends NavigationMixin(LightningElement) 
         }
     }
     
-    // Uncomment when Apex method is implemented
-    /*
-    @wire(getExpenseBreakdown)
-    wiredExpenses({ error, data }) {
-        if (data) {
-            this.processExpenseData(data);
-        } else if (error) {
-            console.error('Error loading expense data:', error);
-            // Load sample data if API call fails
-            this.loadSampleExpenseData();
-        }
-    }
-    */
-    
     connectedCallback() {
         // Load sample expense data
         this.loadSampleExpenseData();
+    }
+
+    renderedCallback() {
+        if (this.travelStats && Object.keys(this.travelStats).length > 0 && !this.animationStartTime) {
+            this.startStatsAnimations();
+        }
+    }
+
+    startStatsAnimations() {
+        if (this.animationStartTime || !this.travelStats.totalTrips) return;
+        
+        this.animationStartTime = Date.now();
+        this.animateCounters();
+        this.animateProgressBars();
+    }
+
+    animateCounters() {
+        const animate = () => {
+            const elapsed = Date.now() - this.animationStartTime;
+            const progress = Math.min(elapsed / this.animationDuration, 1);
+            
+            // Easing function for smooth animation
+            const easeOutCubic = 1 - Math.pow(1 - progress, 3);
+            
+            this.animatedStats = {
+                totalTrips: Math.floor(this.travelStats.totalTrips * easeOutCubic),
+                countriesVisited: Math.floor(this.travelStats.countriesVisited * easeOutCubic),
+                totalDaysAbroad: Math.floor(this.travelStats.totalDaysAbroad * easeOutCubic),
+                totalDistance: Math.floor(this.travelStats.totalDistance * easeOutCubic),
+                carbonFootprint: Math.floor(this.travelStats.carbonFootprint * easeOutCubic),
+                travelStreak: Math.floor(this.travelStats.travelStreak * easeOutCubic)
+            };
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
+        };
+        
+        requestAnimationFrame(animate);
+    }
+
+    animateProgressBars() {
+        setTimeout(() => {
+            const progressBars = this.template.querySelectorAll('.progress-bar');
+            progressBars.forEach((bar, index) => {
+                setTimeout(() => {
+                    bar.style.width = bar.dataset.progress + '%';
+                }, index * 200);
+            });
+        }, 500);
+    }
+
+    // Toggle expanded stats view
+    handleToggleExpandedStats() {
+        this.showExpandedStats = !this.showExpandedStats;
+        
+        // Animate the expanded section
+        setTimeout(() => {
+            const expandedSection = this.template.querySelector('.expanded-stats-section');
+            if (expandedSection && this.showExpandedStats) {
+                expandedSection.classList.add('animate-in');
+            }
+        }, 50);
     }
 
     processTrips(tripsData) {
@@ -368,14 +446,23 @@ export default class EnhancedHomepage extends NavigationMixin(LightningElement) 
         
         // Sort by start date (upcoming first, then in progress, then completed)
         filtered.sort((a, b) => {
+            const dateA = new Date(a.Start_Date__c);
+            const dateB = new Date(b.Start_Date__c);
+            
             // First group by status
             if (a.isUpcoming && !b.isUpcoming) return -1;
             if (!a.isUpcoming && b.isUpcoming) return 1;
             if (a.isInProgress && !b.isInProgress && !b.isUpcoming) return -1;
             if (!a.isInProgress && b.isInProgress && !a.isUpcoming) return 1;
             
-            // Then by date within each status group
-            return new Date(a.Start_Date__c) - new Date(b.Start_Date__c);
+            // Then sort by date within each group
+            if (a.isUpcoming || a.isInProgress) {
+                // Upcoming and in-progress: earliest first
+                return dateA - dateB;
+            } else {
+                // Completed: most recent first (reverse chronological)
+                return dateB - dateA;
+            }
         });
         
         this.filteredTrips = filtered;
@@ -452,7 +539,7 @@ export default class EnhancedHomepage extends NavigationMixin(LightningElement) 
     
     // New getters for enhanced statistics
     get totalDaysTravelFormatted() {
-        return this.totalDaysTravel || 0;
+        return this.animatedStats.totalDaysAbroad || this.totalDaysTravel || 0;
     }
     
     get averageTripDurationFormatted() {
@@ -460,5 +547,64 @@ export default class EnhancedHomepage extends NavigationMixin(LightningElement) 
         if (avgDays === 0) return '0 days';
         if (avgDays === 1) return '1 day';
         return `${avgDays} days`;
+    }
+
+    // Enhanced travel stats getters
+    get formattedDistance() {
+        return (this.animatedStats.totalDistance / 1000).toLocaleString('en-US', {
+            maximumFractionDigits: 0
+        }) + 'K';
+    }
+
+    get formattedCarbon() {
+        return (this.animatedStats.carbonFootprint / 1000000).toLocaleString('en-US', {
+            maximumFractionDigits: 1
+        }) + 'T';
+    }
+
+    get nextMilestone() {
+        const current = this.animatedStats.countriesVisited || this.travelStats.countriesVisited || 0;
+        const nextCountryMilestone = Math.ceil(current / 5) * 5;
+        return {
+            type: 'countries',
+            current: current,
+            target: nextCountryMilestone,
+            progress: nextCountryMilestone > 0 ? (current / nextCountryMilestone) * 100 : 0
+        };
+    }
+
+    get achievementBadges() {
+        const badges = [];
+        const trips = this.animatedStats.totalTrips || this.travelStats.totalTrips || 0;
+        const countries = this.animatedStats.countriesVisited || this.travelStats.countriesVisited || 0;
+        const streak = this.animatedStats.travelStreak || this.travelStats.travelStreak || 0;
+        const days = this.animatedStats.totalDaysAbroad || this.travelStats.totalDaysAbroad || 0;
+        
+        if (trips >= 5) badges.push({ name: 'Traveler', icon: 'utility:world' });
+        if (trips >= 10) badges.push({ name: 'Explorer', icon: 'utility:world' });
+        if (countries >= 10) badges.push({ name: 'World Citizen', icon: 'utility:map' });
+        if (countries >= 20) badges.push({ name: 'Globe Trotter', icon: 'utility:location' });
+        if (streak >= 6) badges.push({ name: 'Travel Addict', icon: 'utility:favorite' });
+        if (days >= 100) badges.push({ name: 'Nomad', icon: 'utility:plane' });
+        return badges;
+    }
+
+    get ecoRating() {
+        const trips = this.animatedStats.totalTrips || this.travelStats.totalTrips || 1;
+        const carbon = this.animatedStats.carbonFootprint || this.travelStats.carbonFootprint || 0;
+        const avgCarbonPerTrip = carbon / trips;
+        
+        if (avgCarbonPerTrip < 500000) return { rating: 'A+', color: 'success' };
+        if (avgCarbonPerTrip < 1000000) return { rating: 'A', color: 'success' };
+        if (avgCarbonPerTrip < 2000000) return { rating: 'B', color: 'warning' };
+        return { rating: 'C', color: 'error' };
+    }
+
+    get expandButtonLabel() {
+        return this.showExpandedStats ? 'Show Less' : 'Show More Stats';
+    }
+
+    get expandButtonIcon() {
+        return this.showExpandedStats ? 'utility:chevronup' : 'utility:chevrondown';
     }
 }

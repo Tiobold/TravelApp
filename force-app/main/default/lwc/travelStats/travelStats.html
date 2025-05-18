@@ -1,0 +1,127 @@
+<template>
+    <lightning-card title="Travel Dashboard" icon-name="custom:custom63">
+        <div slot="actions">
+            <lightning-button-icon 
+                icon-name="utility:refresh" 
+                alternative-text="Refresh" 
+                title="Refresh Stats"
+                onclick={refreshStats}>
+            </lightning-button-icon>
+        </div>
+
+        <div class="slds-p-around_medium">
+            <!-- Loading State -->
+            <template if:true={isLoading}>
+                <div class="loading-container">
+                    <lightning-spinner alternative-text="Loading travel stats" size="medium"></lightning-spinner>
+                </div>
+            </template>
+
+            <!-- Main Stats Grid -->
+            <template if:false={isLoading}>
+                <div class="stats-grid">
+                    <!-- Primary Stats Row -->
+                    <div class="primary-stats">
+                        <!-- Total Distance with Globe Animation -->
+                        <div class="stat-card distance-card">
+                            <div class="stat-icon-container">
+                                <div class="globe-icon">🌍</div>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">{formattedDistance}</div>
+                                <div class="stat-label">KM Traveled</div>
+                                <div class="stat-subtitle">Around the world {travelStats.worldCircles} times</div>
+                            </div>
+                        </div>
+
+                        <!-- Total Trips with Pulse Effect -->
+                        <div class="stat-card trips-card">
+                            <div class="stat-icon-container">
+                                <lightning-icon icon-name="utility:plane" size="large" class="stat-icon pulse"></lightning-icon>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">{animatedStats.totalTrips}</div>
+                                <div class="stat-label">Total Trips</div>
+                                <div class="stat-subtitle">Across {animatedStats.countriesVisited} countries</div>
+                            </div>
+                        </div>
+
+                        <!-- Countries with Flag Animation -->
+                        <div class="stat-card countries-card">
+                            <div class="stat-icon-container">
+                                <lightning-icon icon-name="utility:world" size="large" class="stat-icon"></lightning-icon>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-value">{animatedStats.countriesVisited}</div>
+                                <div class="stat-label">Countries Visited</div>
+                                <div class="stat-subtitle">{travelStats.worldPercentage}% of world</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Secondary Stats Row -->
+                    <div class="secondary-stats">
+                        <!-- Days Abroad -->
+                        <div class="stat-card-small">
+                            <lightning-icon icon-name="utility:calendar" size="small"></lightning-icon>
+                            <div class="stat-small-content">
+                                <div class="stat-small-value">{animatedStats.totalDaysAbroad}</div>
+                                <div class="stat-small-label">Days Abroad</div>
+                            </div>
+                        </div>
+
+                        <!-- Carbon Footprint -->
+                        <div class="stat-card-small eco-card">
+                            <div class="eco-rating-badge" data-rating={ecoRating.rating}>
+                                {ecoRating.rating}
+                            </div>
+                            <div class="stat-small-content">
+                                <div class="stat-small-value">{formattedCarbon}</div>
+                                <div class="stat-small-label">CO₂ Tons</div>
+                            </div>
+                        </div>
+
+                        <!-- Travel Streak -->
+                        <div class="stat-card-small streak-card">
+                            <lightning-icon icon-name="utility:favorite" size="small" class="streak-icon"></lightning-icon>
+                            <div class="stat-small-content">
+                                <div class="stat-small-value">{animatedStats.travelStreak}</div>
+                                <div class="stat-small-label">Month Streak</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Section -->
+                    <div class="progress-section">
+                        <div class="progress-header">
+                            <h3 class="slds-text-heading_small">Next Milestone</h3>
+                            <span class="milestone-text">
+                                {nextMilestone.current} / {nextMilestone.target} countries
+                            </span>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-bar" 
+                                 style="width: 0%" 
+                                 data-progress={nextMilestone.progress}></div>
+                        </div>
+                    </div>
+
+                    <!-- Achievements Section -->
+                    <template if:true={achievementBadges}>
+                        <div class="achievements-section">
+                            <h3 class="slds-text-heading_small">Travel Achievements</h3>
+                            <div class="badges-container">
+                                <template for:each={achievementBadges} for:item="badge">
+                                    <div key={badge.name} class="achievement-badge">
+                                        <lightning-icon icon-name={badge.icon} size="small"></lightning-icon>
+                                        <span class="badge-text">{badge.name}</span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template>
