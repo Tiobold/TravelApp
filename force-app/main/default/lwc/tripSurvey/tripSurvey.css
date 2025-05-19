@@ -1,0 +1,408 @@
+.survey-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: 'Salesforce Sans', Arial, sans-serif;
+    background-color: #f7f9fb;
+    min-height: 100vh;
+}
+
+/* Loading State */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    text-align: center;
+}
+
+.loading-text {
+    margin-top: 16px;
+    color: #5e6061;
+    font-size: 16px;
+}
+
+/* Error State */
+.error-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+    padding: 20px;
+}
+
+.error-card {
+    background: white;
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+}
+
+.error-title {
+    color: #c23934;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 16px 0 8px 0;
+}
+
+.error-message {
+    color: #5e6061;
+    font-size: 16px;
+    margin-bottom: 16px;
+}
+
+.error-help {
+    color: #80838b;
+    font-size: 14px;
+    font-style: italic;
+}
+
+/* Completion State */
+.completion-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+    padding: 20px;
+}
+
+.completion-card {
+    background: white;
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+}
+
+.completion-title {
+    color: #2e844a;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 16px 0 8px 0;
+}
+
+.completion-message {
+    color: #5e6061;
+    font-size: 16px;
+    margin-bottom: 16px;
+}
+
+.completion-help {
+    color: #80838b;
+    font-size: 14px;
+    font-style: italic;
+}
+
+/* Survey Form */
+.survey-form {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+/* Header */
+.survey-header {
+    background: linear-gradient(135deg, #1b96ff 0%, #9058ff 100%);
+    color: white;
+    padding: 40px;
+    text-align: center;
+}
+
+.survey-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+}
+
+.trip-name {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+    opacity: 0.95;
+}
+
+.survey-subtitle {
+    font-size: 16px;
+    margin: 0;
+    opacity: 0.9;
+}
+
+/* Progress Bar */
+.progress-container {
+    padding: 20px 40px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background-color: #e5e5e5;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1b96ff 0%, #9058ff 100%);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    text-align: center;
+    color: #5e6061;
+    font-size: 14px;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Step Container */
+.step-container {
+    padding: 40px;
+}
+
+.step-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #181818;
+    margin: 0 0 32px 0;
+}
+
+.step-title::before {
+    content: "* ";
+    color: #c23934;
+    font-weight: 700;
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 32px;
+}
+
+.form-label {
+    display: block;
+    font-size: 16px;
+    font-weight: 500;
+    color: #181818;
+    margin-bottom: 8px;
+}
+
+.form-label.required::before {
+    content: "* ";
+    color: #c23934;
+    font-weight: 700;
+}
+
+.form-input,
+.form-textarea {
+    width: 100%;
+    border: 2px solid #d9dbdd;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 16px;
+    transition: border-color 0.2s ease;
+    background: white;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: #1b96ff;
+    box-shadow: 0 0 0 3px rgba(27, 150, 255, 0.1);
+}
+
+.form-textarea {
+    min-height: 120px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+/* Radio Group */
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    border: 2px solid #d9dbdd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.radio-option:hover {
+    border-color: #1b96ff;
+    background: #f8f9ff;
+}
+
+.radio-option input[type="radio"] {
+    margin-right: 12px;
+    scale: 1.2;
+}
+
+.radio-label {
+    font-size: 16px;
+    color: #181818;
+    cursor: pointer;
+    flex: 1;
+}
+
+/* Option Group (for duration selection) */
+.option-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.option-card {
+    padding: 20px;
+    border: 2px solid #d9dbdd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+    text-align: center;
+}
+
+.option-card:hover {
+    border-color: #1b96ff;
+    background: #f8f9ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(27, 150, 255, 0.15);
+}
+
+.option-card.selected {
+    border-color: #1b96ff;
+    background: #f8f9ff;
+    box-shadow: 0 0 0 3px rgba(27, 150, 255, 0.1);
+}
+
+.option-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: #181818;
+}
+
+/* Decline Message */
+.decline-message {
+    font-size: 16px;
+    color: #5e6061;
+    line-height: 1.6;
+    background: #f8f9fa;
+    padding: 24px;
+    border-radius: 8px;
+    border-left: 4px solid #9058ff;
+}
+
+/* Submission Info */
+.submission-info {
+    background: #f0f7ff;
+    border: 1px solid #d4edff;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 24px;
+}
+
+.submission-text {
+    color: #0d2d5e;
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Button Container */
+.button-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 40px;
+    background: #f8f9fa;
+    border-top: 1px solid #e5e5e5;
+    gap: 16px;
+}
+
+.nav-button {
+    min-width: 120px;
+    padding: 12px 24px;
+    font-weight: 600;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.nav-button.primary {
+    background: #1b96ff;
+    color: white;
+}
+
+.nav-button.primary:hover:not(:disabled) {
+    background: #1a86e6;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(27, 150, 255, 0.3);
+}
+
+.nav-button.secondary {
+    background: white;
+    color: #5e6061;
+    border: 2px solid #d9dbdd;
+}
+
+.nav-button.secondary:hover {
+    border-color: #1b96ff;
+    color: #1b96ff;
+}
+
+.nav-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .survey-container {
+        padding: 10px;
+    }
+    
+    .survey-header {
+        padding: 30px 20px;
+    }
+    
+    .step-container {
+        padding: 30px 20px;
+    }
+    
+    .button-container {
+        padding: 20px;
+        flex-direction: column;
+    }
+    
+    .nav-button {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .survey-title {
+        font-size: 24px;
+    }
+    
+    .trip-name {
+        font-size: 20px;
+    }
+    
+    .step-title {
+        font-size: 20px;
+    }
+}

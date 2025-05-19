@@ -1,0 +1,221 @@
+<template>
+    <lightning-card title="Survey Response Analysis" icon-name="standard:survey">
+        <div class="slds-card__body slds-card__body_inner">
+            <!-- Loading State -->
+            <template if:true={isLoading}>
+                <div class="slds-align_absolute-center slds-p-around_large">
+                    <lightning-spinner alternative-text="Loading analysis..." size="medium"></lightning-spinner>
+                </div>
+            </template>
+            
+            <!-- Error State -->
+            <template if:true={error}>
+                <div class="slds-box slds-theme_error slds-m-bottom_medium">
+                    <p class="slds-text-color_error">
+                        Error loading survey analysis: {error.body.message}
+                    </p>
+                </div>
+            </template>
+            
+            <!-- Analysis Content -->
+            <template if:true={hasAnalysisData}>
+                <!-- Summary Statistics -->
+                <div class="slds-grid slds-gutters slds-m-bottom_large">
+                    <div class="slds-col slds-size_1-of-4">
+                        <div class="stat-card">
+                            <div class="stat-value">{analysisData.totalInvited}</div>
+                            <div class="stat-label">Total Invited</div>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-size_1-of-4">
+                        <div class="stat-card">
+                            <div class="stat-value">{analysisData.totalResponded}</div>
+                            <div class="stat-label">Responses Received</div>
+                            <div class="stat-sublabel">({responseRate}% response rate)</div>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-size_1-of-4">
+                        <div class="stat-card stat-success">
+                            <div class="stat-value">{analysisData.interestedCount}</div>
+                            <div class="stat-label">Interested</div>
+                            <div class="stat-sublabel">({participationRate}% of respondents)</div>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-size_1-of-4">
+                        <div class="stat-card stat-warning">
+                            <div class="stat-value">{analysisData.declinedCount}</div>
+                            <div class="stat-label">Declined</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Planning Recommendations -->
+                <div class="slds-m-bottom_large">
+                    <h3 class="slds-text-heading_small slds-m-bottom_medium">Planning Recommendations</h3>
+                    <template for:each={planningRecommendations} for:item="recommendation">
+                        <div key={recommendation.message} class={recommendationClass}>
+                            <lightning-icon 
+                                icon-name={recommendationIcon} 
+                                size="x-small" 
+                                class="slds-m-right_x-small">
+                            </lightning-icon>
+                            {recommendation.message}
+                        </div>
+                    </template>
+                </div>
+                
+                <!-- Optimal Dates -->
+                <template if:true={analysisData.optimalStartDate}>
+                    <div class="slds-m-bottom_large">
+                        <h3 class="slds-text-heading_small slds-m-bottom_medium">Recommended Dates</h3>
+                        <div class="slds-box slds-theme_success">
+                            <p class="slds-text-body_regular">
+                                <strong>Optimal dates based on all responses:</strong> {formattedOptimalDates}
+                            </p>
+                            <p class="slds-text-body_small slds-text-color_weak slds-m-top_x-small">
+                                These dates accommodate all interested participants' availability.
+                            </p>
+                        </div>
+                    </div>
+                </template>
+                
+                <!-- Budget Analysis -->
+                <template if:true={budgetRecommendation}>
+                    <div class="slds-m-bottom_large">
+                        <h3 class="slds-text-heading_small slds-m-bottom_medium">Budget Analysis</h3>
+                        <div class="slds-grid slds-gutters">
+                            <div class="slds-col slds-size_1-of-3">
+                                <div class="budget-card">
+                                    <div class="budget-value">{budgetRecommendation.average}</div>
+                                    <div class="budget-label">Average Budget</div>
+                                </div>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3">
+                                <div class="budget-card">
+                                    <div class="budget-value">{budgetRecommendation.median}</div>
+                                    <div class="budget-label">Median Budget</div>
+                                </div>
+                            </div>
+                            <div class="slds-col slds-size_1-of-3">
+                                <div class="budget-card">
+                                    <div class="budget-value">{budgetRecommendation.range}</div>
+                                    <div class="budget-label">Budget Range</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                
+                <!-- Duration Preference -->
+                <template if:true={analysisData.recommendedDuration}>
+                    <div class="slds-m-bottom_large">
+                        <h3 class="slds-text-heading_small slds-m-bottom_medium">Trip Duration</h3>
+                        <div class="slds-box slds-theme_info">
+                            <p class="slds-text-body_regular">
+                                <strong>Most popular duration:</strong> {analysisData.recommendedDuration}
+                            </p>
+                        </div>
+                    </div>
+                </template>
+                
+                <!-- Participant Status -->
+                <div class="slds-m-bottom_large">
+                    <div class="slds-grid slds-gutters">
+                        <!-- Interested Participants -->
+                        <div class="slds-col slds-size_1-of-3">
+                            <h4 class="slds-text-heading_x-small slds-m-bottom_small">
+                                Interested ({interestedCompanions.length})
+                            </h4>
+                            <template if:true={interestedCompanions.length}>
+                                <ul class="participant-list">
+                                    <template for:each={interestedCompanions} for:item="companion">
+                                        <li key={companion.Id} class="participant-item participant-interested">
+                                            <lightning-icon icon-name="utility:success" size="xx-small" variant="success"></lightning-icon>
+                                            {companion.Name}
+                                        </li>
+                                    </template>
+                                </ul>
+                            </template>
+                            <template if:false={interestedCompanions.length}>
+                                <p class="slds-text-color_weak">No interested participants yet</p>
+                            </template>
+                        </div>
+                        
+                        <!-- Declined Participants -->
+                        <div class="slds-col slds-size_1-of-3">
+                            <h4 class="slds-text-heading_x-small slds-m-bottom_small">
+                                Declined ({declinedCompanions.length})
+                            </h4>
+                            <template if:true={declinedCompanions.length}>
+                                <ul class="participant-list">
+                                    <template for:each={declinedCompanions} for:item="companion">
+                                        <li key={companion.Id} class="participant-item participant-declined">
+                                            <lightning-icon icon-name="utility:clear" size="xx-small" variant="error"></lightning-icon>
+                                            {companion.Name}
+                                        </li>
+                                    </template>
+                                </ul>
+                            </template>
+                            <template if:false={declinedCompanions.length}>
+                                <p class="slds-text-color_weak">No declined participants</p>
+                            </template>
+                        </div>
+                        
+                        <!-- Pending Participants -->
+                        <div class="slds-col slds-size_1-of-3">
+                            <h4 class="slds-text-heading_x-small slds-m-bottom_small">
+                                Pending Response ({pendingCompanions.length})
+                            </h4>
+                            <template if:true={pendingCompanions.length}>
+                                <ul class="participant-list">
+                                    <template for:each={pendingCompanions} for:item="companion">
+                                        <li key={companion.Id} class="participant-item participant-pending">
+                                            <lightning-icon icon-name="utility:clock" size="xx-small" variant="warning"></lightning-icon>
+                                            {companion.Name}
+                                        </li>
+                                    </template>
+                                </ul>
+                            </template>
+                            <template if:false={pendingCompanions.length}>
+                                <p class="slds-text-color_weak">All invitations responded</p>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="slds-m-top_large">
+                    <div class="slds-button-group">
+                        <lightning-button 
+                            label="Refresh Analysis" 
+                            onclick={handleRefresh}
+                            variant="neutral">
+                        </lightning-button>
+                        <template if:true={canProceedWithPlanning}>
+                            <lightning-button 
+                                label="Finalize Trip Details" 
+                                variant="brand"
+                                disabled>
+                            </lightning-button>
+                        </template>
+                    </div>
+                </div>
+            </template>
+            
+            <!-- No Data State -->
+            <template if:false={hasAnalysisData}>
+                <template if:false={isLoading}>
+                    <div class="slds-align_absolute-center slds-p-around_large">
+                        <div class="slds-text-align_center">
+                            <lightning-icon icon-name="utility:info" size="large" variant="inverse"></lightning-icon>
+                            <h3 class="slds-text-heading_medium slds-m-top_medium">No Survey Responses Yet</h3>
+                            <p class="slds-text-body_regular slds-text-color_weak">
+                                Once participants start responding to your survey invitations, you'll see the analysis here.
+                            </p>
+                        </div>
+                    </div>
+                </template>
+            </template>
+        </div>
+    </lightning-card>
+</template>
