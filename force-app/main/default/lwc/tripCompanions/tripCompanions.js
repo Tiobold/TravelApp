@@ -18,6 +18,7 @@ export default class TripCompanions extends LightningElement {
     // Main data
     confirmedCompanions = [];
     invitedCompanions = [];
+    interestedCompanions = [];
     currentUserCompanion = null;
     
     // Component states
@@ -62,32 +63,33 @@ export default class TripCompanions extends LightningElement {
         this.isLoading = true;
         if (data) {
             console.log('Data received:', JSON.stringify(data));
+            console.log('Interested data in response:', data.interested);
             
             // Handle potential error from Apex
             if (data.error) {
                 this.error = 'Error loading companions: ' + data.error;
                 this.confirmedCompanions = [];
                 this.invitedCompanions = [];
+                this.interestedCompanions = [];
                 this.currentUserCompanion = null;
                 this.isLoading = false;
                 return;
             }
             
-            // Process all companions and filter out current user
+            // Reset arrays
             const allConfirmed = [];
             const allInvited = [];
+            const allInterested = [];
             
             // Process confirmed companions
             if (data.confirmed && Array.isArray(data.confirmed)) {
                 data.confirmed.forEach(companion => {
-                    // Create the base companion object with photo and key
                     const enrichedCompanion = {
                         ...companion,
                         photoUrl: companion.PhotoURL || '/img/icon/t4v35/standard/user_120.png',
                         key: companion.Id
                     };
                     
-                    // Check if this is the current user
                     if (companion.ContactId === this.currentUserContactId) {
                         this.currentUserCompanion = enrichedCompanion;
                     } else {
@@ -97,23 +99,19 @@ export default class TripCompanions extends LightningElement {
                 
                 this.confirmedCompanions = allConfirmed;
             } else {
-                console.log('Confirmed companions data is not an array:', data.confirmed);
                 this.confirmedCompanions = [];
             }
             
-            // Process invited companions and filter out current user
+            // Process invited companions
             if (data.invited && Array.isArray(data.invited)) {
                 data.invited.forEach(companion => {
-                    // Create the base companion object
                     const enrichedCompanion = {
                         ...companion,
                         photoUrl: companion.PhotoURL || '/img/icon/t4v35/standard/user_120.png',
                         key: companion.Id
                     };
                     
-                    // Check if this is the current user (shouldn't normally happen)
                     if (companion.ContactId === this.currentUserContactId) {
-                        // If user is in invited list, update the current user object
                         this.currentUserCompanion = enrichedCompanion;
                     } else {
                         allInvited.push(enrichedCompanion);
@@ -122,9 +120,33 @@ export default class TripCompanions extends LightningElement {
                 
                 this.invitedCompanions = allInvited;
             } else {
-                console.log('Invited companions data is not an array:', data.invited);
                 this.invitedCompanions = [];
             }
+            
+            // Process interested companions - completely separate from invited
+            if (data.interested && Array.isArray(data.interested)) {
+                data.interested.forEach(companion => {
+                    const enrichedCompanion = {
+                        ...companion,
+                        photoUrl: companion.PhotoURL || '/img/icon/t4v35/standard/user_120.png',
+                        key: companion.Id
+                    };
+                    
+                    if (companion.ContactId === this.currentUserContactId) {
+                        this.currentUserCompanion = enrichedCompanion;
+                    } else {
+                        allInterested.push(enrichedCompanion);
+                    }
+                });
+                
+                this.interestedCompanions = allInterested;
+            } else {
+                this.interestedCompanions = [];
+            }
+            
+            console.log('Processed interestedCompanions:', JSON.stringify(this.interestedCompanions));
+            console.log('Has interested companions?', this.hasInterestedCompanions);
+            console.log('Interested count:', this.interestedCount);
             
             this.error = undefined;
             this.isLoading = false;
@@ -132,6 +154,7 @@ export default class TripCompanions extends LightningElement {
             this.error = 'Error loading companions: ' + error.body.message;
             this.confirmedCompanions = [];
             this.invitedCompanions = [];
+            this.interestedCompanions = [];
             this.currentUserCompanion = null;
             this.isLoading = false;
             console.error('Error fetching trip companions:', error);
@@ -346,7 +369,7 @@ export default class TripCompanions extends LightningElement {
             // Find companion in our existing data
             const companion = this.currentUserCompanion && this.currentUserCompanion.Id === companionId
                 ? this.currentUserCompanion
-                : [...this.confirmedCompanions, ...this.invitedCompanions].find(c => c.Id === companionId);
+                : [...this.confirmedCompanions, ...this.invitedCompanions, ...this.interestedCompanions].find(c => c.Id === companionId);
             
             if (!companion) {
                 throw new Error('Companion not found');
@@ -488,14 +511,22 @@ export default class TripCompanions extends LightningElement {
     get hasInvitedCompanions() {
         return this.invitedCompanions && this.invitedCompanions.length > 0;
     }
+    get hasInterestedCompanions() {
+        console.log('hasInterestedCompanions called, length:', 
+                   this.interestedCompanions && Array.isArray(this.interestedCompanions) ? 
+                   this.interestedCompanions.length : 'not an array');
+        return this.interestedCompanions && 
+               Array.isArray(this.interestedCompanions) && 
+               this.interestedCompanions.length > 0;
+    }
     
     get hasAnyCompanions() {
-        return this.hasConfirmedCompanions || this.hasInvitedCompanions;
+        return this.hasConfirmedCompanions || this.hasInvitedCompanions || this.hasInterestedCompanions;
     }
     
     get showNoCompanionsMessage() {
         // Only show the "no companions" message if we have the current user but no other companions
-        return this.hasCurrentUserCompanion && !this.hasConfirmedCompanions && !this.hasInvitedCompanions;
+        return this.hasCurrentUserCompanion && !this.hasConfirmedCompanions && !this.hasInvitedCompanions && !this.hasInterestedCompanions;
     }
     
     get confirmedCount() {
@@ -504,6 +535,11 @@ export default class TripCompanions extends LightningElement {
     
     get invitedCount() {
         return this.invitedCompanions.length;
+    }
+    
+    get interestedCount() {
+        return this.interestedCompanions && Array.isArray(this.interestedCompanions) ? 
+               this.interestedCompanions.length : 0;
     }
     
     // Invite modal getters
@@ -561,5 +597,8 @@ export default class TripCompanions extends LightningElement {
     get tripCountLabel() {
         const count = this.selectedCompanion?.TripCount || 0;
         return count === 1 ? 'trip' : 'trips';
+    }
+    refreshData() {
+        return refreshApex(this.wiredCompanionsResult);
     }
 }

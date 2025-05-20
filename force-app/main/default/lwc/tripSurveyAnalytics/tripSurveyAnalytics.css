@@ -1,0 +1,101 @@
+.analytics-container {
+    font-family: 'Salesforce Sans', Arial, sans-serif;
+}
+
+.metric-card {
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+    transition: all 0.2s ease;
+    height: 100%;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.metric-card .slds-icon_container {
+    margin-bottom: 8px;
+}
+
+.metric-card .slds-text-heading_large {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 8px 0;
+    color: #0070d2;
+}
+
+.date-range {
+    color: #0070d2;
+    font-weight: 500;
+}
+
+.budget-range {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.budget-range-label {
+    font-weight: 600;
+    margin-right: 12px;
+}
+
+.budget-range-value {
+    display: flex;
+    align-items: center;
+}
+
+.budget-range-separator {
+    margin: 0 8px;
+    color: #706e6b;
+}
+
+.budget-pill {
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-weight: 600;
+}
+
+.budget-low {
+    background-color: #ecebea;
+    color: #706e6b;
+}
+
+.budget-medium {
+    background-color: #d8edff;
+    color: #006dcc;
+}
+
+.budget-high {
+    background-color: #faffbd;
+    color: #8e6900;
+}
+
+.budget-metric {
+    text-align: center;
+    background: #f3f2f2;
+    padding: 16px;
+    border-radius: 8px;
+    height: 100%;
+}
+
+.budget-metric-value {
+    color: #0070d2;
+    font-weight: 600;
+}
+
+.budget-metric-label {
+    font-size: 0.875rem;
+    color: #706e6b;
+    margin-top: 4px;
+}
+
+.budget-recommendation {
+    background-color: #eef4ff;
+    border-left: 4px solid #0070d2;
+    padding: 12px;
+    border-radius: 0 4px 4px 0;
+    margin-top: 12px;
+}

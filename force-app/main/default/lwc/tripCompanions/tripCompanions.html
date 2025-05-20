@@ -86,6 +86,29 @@
                         </template>
                     </div>
                 </template>
+
+                <!-- Interested Companions Section (Updated) -->
+                <template if:true={hasInterestedCompanions}>
+                    <div class="section-header slds-var-p-around_x-small slds-var-m-top_small">
+                        <div class="slds-text-heading_small slds-var-p-bottom_x-small">
+                            Interested ({interestedCount})
+                        </div>
+                    </div>
+                    <div class="companion-container interested-container">
+                        <template for:each={interestedCompanions} for:item="companion">
+                            <div key={companion.key} class="companion-card interested-card" data-id={companion.Id} onclick={handleCompanionClick}>
+                                <div class="companion-photo-container">
+                                    <img src={companion.photoUrl} alt={companion.Name} class="companion-photo" />
+                                    <div class="trip-count interested-badge">{companion.TripCount}</div>
+                                </div>
+                                <div class="companion-details">
+                                    <p class="companion-name">{companion.Name}</p>
+                                    <p class="companion-status interested">Interested</p>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
                 
                 <!-- No Companions Message -->
                 <template if:true={showNoCompanionsMessage}>

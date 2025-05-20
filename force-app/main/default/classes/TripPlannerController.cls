@@ -1,4 +1,4 @@
-public with sharing class TripPlannerController {
+public without sharing class TripPlannerController {
     
     @AuraEnabled
     public static List<Contact> getContacts() {
@@ -310,26 +310,45 @@ public with sharing class TripPlannerController {
     @AuraEnabled
     public static SurveyAccessResult validateSurveyToken(String token) {
         try {
+            if (String.isBlank(token)) {
+                return new SurveyAccessResult(false, null, 'Survey token is required');
+            }
+            
             List<Travel_Companion__c> companions = [
                 SELECT Id, Name, Contact__c, Trip__c, Trip__r.Name, 
-                       Trip__r.Start_Date__c, Trip__r.End_Date__c, Status__c
+                    Trip__r.Start_Date__c, Trip__r.End_Date__c, Status__c
                 FROM Travel_Companion__c 
-                WHERE Survey_Token__c = :token 
+                WHERE Survey_Token__c = :token.trim()
                 AND Status__c = 'Invited'
-                LIMIT 1
+                LIMIT 1 
             ];
             
             if (companions.isEmpty()) {
-                return new SurveyAccessResult(false, null, 'Invalid or expired survey link');
+                return new SurveyAccessResult(false, null, 'Invalid or expired survey link. Token: ' + token);
             }
             
             Travel_Companion__c companion = companions[0];
             
             // Get the survey ID
-            String surveyId = getTripPlannerSurveyId();
+            String surveyId;
+            try {
+                surveyId = getTripPlannerSurveyId();
+            } catch (Exception e) {
+                System.debug('Error getting survey ID: ' + e.getMessage());
+                surveyId = null;
+            }
             
             // Get survey questions
-            List<SurveyQuestionWrapper> questions = getSurveyQuestions(surveyId);
+            List<SurveyQuestionWrapper> questions = new List<SurveyQuestionWrapper>();
+            try {
+                if (surveyId != null) {
+                    questions = getSurveyQuestions(surveyId);
+                }
+            } catch (Exception e) {
+                System.debug('Error getting survey questions: ' + e.getMessage());
+                // Create default questions if none found
+                questions = createDefaultQuestions();
+            }
             
             SurveyInfo surveyInfo = new SurveyInfo();
             surveyInfo.companionId = companion.Id;
@@ -344,44 +363,122 @@ public with sharing class TripPlannerController {
             return new SurveyAccessResult(true, surveyInfo, null);
             
         } catch (Exception e) {
-            return new SurveyAccessResult(false, null, 'Error validating survey token: ' + e.getMessage());
+            System.debug('Error in validateSurveyToken: ' + e.getMessage() + '\n' + e.getStackTraceString());
+            return new SurveyAccessResult(false, null, 'Error validating survey token');
         }
+    }
+
+    // Create default questions if none found
+    private static List<SurveyQuestionWrapper> createDefaultQuestions() {
+        List<SurveyQuestionWrapper> questions = new List<SurveyQuestionWrapper>();
+        
+        SurveyQuestionWrapper q1 = new SurveyQuestionWrapper();
+        q1.id = 'default-q1';
+        q1.questionText = 'Are you interested in participating in this trip?';
+        q1.questionType = 'Single Choice';
+        q1.orderNumber = 1;
+        q1.isRequired = true;
+        q1.options = new List<String>{'Yes', 'No'};
+        questions.add(q1);
+        
+        SurveyQuestionWrapper q2 = new SurveyQuestionWrapper();
+        q2.id = 'default-q2';
+        q2.questionText = 'For how long would you be able to travel?';
+        q2.questionType = 'Single Choice';
+        q2.orderNumber = 2;
+        q2.isRequired = true;
+        q2.options = new List<String>{'Weekend', '1 Week', '10 Days', 'Any duration is good'};
+        questions.add(q2);
+        
+        SurveyQuestionWrapper q3 = new SurveyQuestionWrapper();
+        q3.id = 'default-q3';
+        q3.questionText = 'What is your budget (in Euro)?';
+        q3.questionType = 'Number';
+        q3.orderNumber = 3;
+        q3.isRequired = true;
+        questions.add(q3);
+        
+        SurveyQuestionWrapper q4 = new SurveyQuestionWrapper();
+        q4.id = 'default-q4';
+        q4.questionText = 'What is your earliest available departure date?';
+        q4.questionType = 'Date';
+        q4.orderNumber = 4;
+        q4.isRequired = true;
+        questions.add(q4);
+        
+        SurveyQuestionWrapper q5 = new SurveyQuestionWrapper();
+        q5.id = 'default-q5';
+        q5.questionText = 'Any additional notes or special requirements?';
+        q5.questionType = 'Long Text';
+        q5.orderNumber = 5;
+        q5.isRequired = false;
+        questions.add(q5);
+        
+        return questions;
     }
     
     // Method to submit survey response
     @AuraEnabled
     public static ResponseSubmissionResult submitSurveyResponse(String token, String responseData) {
         try {
+            // Validate parameters
+            if (String.isBlank(token)) {
+                return new ResponseSubmissionResult(false, 'Missing survey token');
+            }
+            
+            if (String.isBlank(responseData)) {
+                return new ResponseSubmissionResult(false, 'No response data provided');
+            }
+            
             // Validate token first
             SurveyAccessResult accessResult = validateSurveyToken(token);
             if (!accessResult.success) {
                 return new ResponseSubmissionResult(false, accessResult.error);
             }
             
-            // Parse response data
-            Map<String, Object> response = (Map<String, Object>) JSON.deserializeUntyped(responseData);
-            
-            // Update companion record with response
-            Travel_Companion__c companion = new Travel_Companion__c(
-                Id = accessResult.surveyInfo.companionId,
-                Survey_Response__c = responseData,
-                Survey_Completed_Date__c = System.now()
-            );
-            
-            // Update status based on participation response
-            Boolean wantsToParticipate = (Boolean) response.get('wantsToParticipate');
-            if (wantsToParticipate == true) {
-                companion.Status__c = 'Interested';
-            } else {
-                companion.Status__c = 'Declined';
+            try {
+                // Parse response data (defensive)
+                Map<String, Object> response = (Map<String, Object>) JSON.deserializeUntyped(responseData);
+                
+                // Update companion record with response
+                Travel_Companion__c companion = new Travel_Companion__c(
+                    Id = accessResult.surveyInfo.companionId,
+                    Survey_Response__c = responseData,
+                    Survey_Completed_Date__c = System.now()
+                );
+                
+                // Update status based on participation response
+                Boolean wantsToParticipate = false;
+                Object participationObj = response.get('wantsToParticipate');
+                
+                if (participationObj != null) {
+                    // Handle different data types
+                    if (participationObj instanceof Boolean) {
+                        wantsToParticipate = (Boolean) participationObj;
+                    } else if (participationObj instanceof String) {
+                        wantsToParticipate = 'Yes'.equalsIgnoreCase((String) participationObj) || 
+                                            'true'.equalsIgnoreCase((String) participationObj);
+                    }
+                }
+                
+                if (wantsToParticipate) {
+                    companion.Status__c = 'Interested';
+                } else {
+                    companion.Status__c = 'Declined';
+                }
+                
+                update companion;
+                
+                return new ResponseSubmissionResult(true, 'Thank you for your response! The trip organizer will review all responses and get back to you soon.');
+                
+            } catch (Exception e) {
+                System.debug('Error processing response: ' + e.getMessage());
+                return new ResponseSubmissionResult(false, 'Error processing response: ' + e.getMessage());
             }
             
-            update companion;
-            
-            return new ResponseSubmissionResult(true, 'Thank you for your response! The trip organizer will review all responses and get back to you soon.');
-            
         } catch (Exception e) {
-            return new ResponseSubmissionResult(false, 'Error submitting response: ' + e.getMessage());
+            System.debug('Error in submitSurveyResponse: ' + e.getMessage() + '\n' + e.getStackTraceString());
+            return new ResponseSubmissionResult(false, 'Error submitting response');
         }
     }
     
@@ -571,5 +668,16 @@ public with sharing class TripPlannerController {
         @AuraEnabled public Decimal minBudget {get; set;}
         @AuraEnabled public Decimal maxBudget {get; set;}
         @AuraEnabled public String recommendedDuration {get; set;}
+        
+        public TripAnalysisResult() {
+            this.totalInvited = 0;
+            this.totalResponded = 0;
+            this.interestedCount = 0;
+            this.declinedCount = 0;
+            this.averageBudget = 0;
+            this.medianBudget = 0;
+            this.minBudget = 0;
+            this.maxBudget = 0;
+    }
     }
 }

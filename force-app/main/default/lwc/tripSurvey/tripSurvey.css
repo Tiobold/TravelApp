@@ -406,3 +406,59 @@
         font-size: 20px;
     }
 }
+/* Design Mode Styles */
+.survey-container.design-mode {
+    border: 2px dashed #1589ee;
+    padding-top: 10px;
+    position: relative;
+}
+
+.design-mode-indicator {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: #1589ee;
+    color: white;
+    padding: 2px 6px;
+    font-size: 12px;
+    border-radius: 0 0 0 8px;
+}
+
+/* Update the survey-header to show design mode indicator */
+.design-mode .survey-header {
+    background: linear-gradient(135deg, #1b96ff 0%, #9058ff 100%);
+    position: relative;
+}
+
+.design-mode .survey-header::before {
+    content: "Preview Mode - Add a token parameter to URL at runtime";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    font-size: 12px;
+    padding: 4px;
+    text-align: center;
+    
+}
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeInScale {
+            0% {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .completion-card {
+            animation: fadeInScale 0.5s ease-out;
+        }

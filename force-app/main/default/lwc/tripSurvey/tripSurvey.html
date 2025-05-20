@@ -1,221 +1,338 @@
 <template>
-    <lightning-card title="Survey Response Analysis" icon-name="standard:survey">
-        <div class="slds-card__body slds-card__body_inner">
-            <!-- Loading State -->
-            <template if:true={isLoading}>
-                <div class="slds-align_absolute-center slds-p-around_large">
-                    <lightning-spinner alternative-text="Loading analysis..." size="medium"></lightning-spinner>
+    <div class="survey-container">
+        <!-- Loading State -->
+        <template if:true={isLoading}>
+            <div class="loading-container">
+                <lightning-spinner alternative-text="Loading survey..." size="large"></lightning-spinner>
+                <p class="loading-text">Loading survey information...</p>
+            </div>
+        </template>
+        
+        <!-- Error State -->
+        <template if:true={error}>
+            <div class="error-container">
+                <div class="error-card">
+                    <lightning-icon icon-name="utility:error" alternative-text="Error" size="large" variant="error"></lightning-icon>
+                    <h2 class="error-title">Survey Not Available</h2>
+                    <p class="error-message">{error}</p>
+                    <p class="error-help">Please check your survey link or contact the trip organizer.</p>
                 </div>
-            </template>
-            
-            <!-- Error State -->
-            <template if:true={error}>
-                <div class="slds-box slds-theme_error slds-m-bottom_medium">
-                    <p class="slds-text-color_error">
-                        Error loading survey analysis: {error.body.message}
-                    </p>
+            </div>
+        </template>
+        
+        <!-- Completion State -->
+        <template if:true={isCompleted}>
+            <div class="completion-container">
+                <div class="completion-card">
+                    <lightning-icon icon-name="utility:success" alternative-text="Success" size="large" variant="success"></lightning-icon>
+                    <h2 class="completion-title">Survey Complete</h2>
+                    <p class="completion-message">Thank you for completing the survey! Your response has been recorded.</p>
+                    
+                    <!-- Response Summary -->
+                    <div class="response-summary">
+                        <h3>Your Responses:</h3>
+                        <template if:true={hasResponses}>
+                            <ul>
+                                <template for:each={formattedResponses} for:item="response">
+                                    <li key={response.id}>
+                                        <strong>{response.question}:</strong> {response.answer}
+                                    </li>
+                                </template>
+                            </ul>
+                        </template>
+                        <template if:false={hasResponses}>
+                            <p>No responses recorded.</p>
+                        </template>
+                    </div>
+                    
+                    <p class="completion-help">The trip organizer will be in touch with further details about the trip to {tripDestination}.</p>
+                    
+                    <!-- Optional: Add a "Start Over" button -->
+                    <div style="margin-top: 30px;">
+                        <button onclick={handleStartOver} class="nav-button secondary">
+                            Complete Another Survey
+                        </button>
+                    </div>
                 </div>
-            </template>
-            
-            <!-- Analysis Content -->
-            <template if:true={hasAnalysisData}>
-                <!-- Summary Statistics -->
-                <div class="slds-grid slds-gutters slds-m-bottom_large">
-                    <div class="slds-col slds-size_1-of-4">
-                        <div class="stat-card">
-                            <div class="stat-value">{analysisData.totalInvited}</div>
-                            <div class="stat-label">Total Invited</div>
-                        </div>
-                    </div>
-                    <div class="slds-col slds-size_1-of-4">
-                        <div class="stat-card">
-                            <div class="stat-value">{analysisData.totalResponded}</div>
-                            <div class="stat-label">Responses Received</div>
-                            <div class="stat-sublabel">({responseRate}% response rate)</div>
-                        </div>
-                    </div>
-                    <div class="slds-col slds-size_1-of-4">
-                        <div class="stat-card stat-success">
-                            <div class="stat-value">{analysisData.interestedCount}</div>
-                            <div class="stat-label">Interested</div>
-                            <div class="stat-sublabel">({participationRate}% of respondents)</div>
-                        </div>
-                    </div>
-                    <div class="slds-col slds-size_1-of-4">
-                        <div class="stat-card stat-warning">
-                            <div class="stat-value">{analysisData.declinedCount}</div>
-                            <div class="stat-label">Declined</div>
-                        </div>
-                    </div>
+            </div>
+        </template>
+        
+        <!-- Survey Form -->
+        <template if:true={showSurveyForm}>
+            <div class="survey-form">
+                <!-- Header -->
+                <div class="survey-header">
+                    <h1 class="survey-title">Trip Planning Survey {designModeText}</h1>
+                    <p class="trip-name">{surveyInfo.tripName}</p>
+                    <p class="survey-subtitle">Tentative dates: {formattedTentativeStartDate} - {formattedTentativeEndDate}</p>
                 </div>
                 
-                <!-- Planning Recommendations -->
-                <div class="slds-m-bottom_large">
-                    <h3 class="slds-text-heading_small slds-m-bottom_medium">Planning Recommendations</h3>
-                    <template for:each={planningRecommendations} for:item="recommendation">
-                        <div key={recommendation.message} class={recommendationClass}>
-                            <lightning-icon 
-                                icon-name={recommendationIcon} 
-                                size="x-small" 
-                                class="slds-m-right_x-small">
-                            </lightning-icon>
-                            {recommendation.message}
-                        </div>
+                <!-- Progress Bar -->
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style={progressStyle}></div>
+                    </div>
+                    <p class="progress-text">Question {currentStep} of {totalSteps}</p>
+                </div>
+                
+                <!-- Question Container -->
+                <div class="step-container">
+                    <template if:true={currentQuestionData}>
+                        <h2 class="step-title">{currentQuestionData.questionText}</h2>
+                        
+                        <!-- Text Question -->
+                        <template if:true={isTextQuestion}>
+                            <div class="form-group">
+                                <input type="text" class="form-input" 
+                                       value={currentResponse}
+                                       placeholder="Enter your answer here"
+                                       data-question-id={currentQuestionData.id}
+                                       data-question-type={currentQuestionData.questionType}
+                                       onchange={handleResponseChange} />
+                            </div>
+                        </template>
+                        
+                        <!-- Email Question -->
+                        <template if:true={isEmailQuestion}>
+                            <div class="form-group">
+                                <input type="email" class="form-input" 
+                                       value={currentResponse}
+                                       placeholder="Enter your email address"
+                                       data-question-id={currentQuestionData.id}
+                                       data-question-type={currentQuestionData.questionType}
+                                       onchange={handleResponseChange} />
+                            </div>
+                        </template>
+                        
+                        <!-- Number Question -->
+                        <template if:true={isNumberQuestion}>
+                            <div class="form-group">
+                                <input type="number" class="form-input" 
+                                       value={currentResponse}
+                                       placeholder="Enter a number"
+                                       data-question-id={currentQuestionData.id}
+                                       data-question-type={currentQuestionData.questionType}
+                                       onchange={handleResponseChange} />
+                            </div>
+                        </template>
+                        
+                        <!-- Date Question -->
+                        <template if:true={isDateQuestion}>
+                            <div class="form-group">
+                                <input type="date" class="form-input" 
+                                       value={currentResponse}
+                                       min={minDepartureDate}
+                                       data-question-id={currentQuestionData.id}
+                                       data-question-type={currentQuestionData.questionType}
+                                       onchange={handleResponseChange} />
+                            </div>
+                        </template>
+                        
+                        <!-- Long Text Question -->
+                        <template if:true={isLongTextQuestion}>
+                            <div class="form-group">
+                                <textarea class="form-textarea"
+                                          placeholder="Enter your detailed response here"
+                                          data-question-id={currentQuestionData.id}
+                                          data-question-type={currentQuestionData.questionType}
+                                          onchange={handleResponseChange}>{currentResponse}</textarea>
+                            </div>
+                        </template>
+                        
+                        <!-- Single Choice Question (Radio) -->
+                        <template if:true={isSingleChoiceQuestion}>
+                            <template if:false={hasOptionsCards}>
+                                <div class="form-group">
+                                    <div class="radio-group">
+                                        <!-- Fixed options for participation question -->
+                                        <template if:true={isParticipationQuestion}>
+                                            <div class="radio-option">
+                                                <input type="radio" id="participation-yes" name="single-choice"
+                                                       value="Yes"
+                                                       checked={isYesSelected}
+                                                       data-question-id={currentQuestionData.id}
+                                                       data-question-type={currentQuestionData.questionType}
+                                                       onchange={handleResponseChange} />
+                                                <label class="radio-label" for="participation-yes">Yes</label>
+                                            </div>
+                                            <div class="radio-option">
+                                                <input type="radio" id="participation-no" name="single-choice"
+                                                       value="No"
+                                                       checked={isNoSelected}
+                                                       data-question-id={currentQuestionData.id}
+                                                       data-question-type={currentQuestionData.questionType}
+                                                       onchange={handleResponseChange} />
+                                                <label class="radio-label" for="participation-no">No</label>
+                                            </div>
+                                        </template>
+                                        
+                                        <!-- Dynamic options for other questions -->
+                                        <template if:false={isParticipationQuestion}>
+                                            <template if:true={currentQuestionData.options}>
+                                                <template for:each={currentQuestionData.options} for:item="option" for:index="idx">
+                                                    <div class="radio-option" key={option}>
+                                                        <input type="radio" 
+                                                               id={generateOptionId}
+                                                               name="single-choice"
+                                                               value={option}
+                                                               checked={isOptionSelected}
+                                                               data-question-id={currentQuestionData.id}
+                                                               data-question-type={currentQuestionData.questionType}
+                                                               data-option-value={option}
+                                                               onchange={handleResponseChange} />
+                                                        <label class="radio-label" for={generateOptionId}>{option}</label>
+                                                    </div>
+                                                </template>
+                                            </template>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                        </template>
+                        
+                        <!-- Multiple Choice (Checkboxes) -->
+                        <template if:true={isMultipleChoiceQuestion}>
+                            <div class="form-group">
+                                <div class="radio-group">
+                                    <template if:true={currentQuestionData.options}>
+                                        <template for:each={currentQuestionData.options} for:item="option" for:index="idx">
+                                            <div class="radio-option" key={option}>
+                                                <input type="checkbox" 
+                                                       id={generateCheckboxId}
+                                                       name="multi-choice"
+                                                       value={option}
+                                                       checked={isOptionInArray}
+                                                       data-question-id={currentQuestionData.id}
+                                                       data-question-type={currentQuestionData.questionType}
+                                                       data-option-value={option}
+                                                       onchange={handleResponseChange} />
+                                                <label class="radio-label" for={generateCheckboxId}>{option}</label>
+                                            </div>
+                                        </template>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                        
+                        <!-- Duration Options (Cards) -->
+                        <template if:true={hasOptionsCards}>
+                            <div class="form-group">
+                                <div class="option-group">
+                                    <!-- Fixed options for duration question -->
+                                    <template if:true={isDurationQuestion}>
+                                        <div 
+                                             data-value="Weekend" 
+                                             data-question-id={currentQuestionData.id}
+                                             class={getWeekendCardClass}
+                                             onclick={handleCardClick}>
+                                            <p class="option-text">Weekend</p>
+                                        </div>
+                                        <div 
+                                             data-value="1 Week" 
+                                             data-question-id={currentQuestionData.id}
+                                             class={getWeekCardClass}
+                                             onclick={handleCardClick}>
+                                            <p class="option-text">1 Week</p>
+                                        </div>
+                                        <div 
+                                             data-value="10 Days" 
+                                             data-question-id={currentQuestionData.id}
+                                             class={get10DaysCardClass}
+                                             onclick={handleCardClick}>
+                                            <p class="option-text">10 Days</p>
+                                        </div>
+                                        <div 
+                                             data-value="Any duration is good" 
+                                             data-question-id={currentQuestionData.id}
+                                             class={getAnyDurationCardClass}
+                                             onclick={handleCardClick}>
+                                            <p class="option-text">Any duration is good</p>
+                                        </div>
+                                    </template>
+                                    
+                                    <!-- Dynamic options for other card questions -->
+                                    <template if:false={isDurationQuestion}>
+                                        <template if:true={currentQuestionData.options}>
+                                            <template for:each={currentQuestionData.options} for:item="option">
+                                                <div key={option} 
+                                                     class={getCardClass} 
+                                                     data-value={option}
+                                                     data-question-id={currentQuestionData.id}
+                                                     onclick={handleCardClick}>
+                                                    <p class="option-text">{option}</p>
+                                                </div>
+                                            </template>
+                                        </template>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                        
+                        <!-- Decline Message -->
+                        <template if:true={showDeclineMessage}>
+                            <div class="form-group">
+                                <p class="decline-message">
+                                    Thank you for letting us know. You won't be added to this trip, but we'll keep you in mind for future adventures!
+                                </p>
+                            </div>
+                        </template>
+                        
+                        <!-- Submission Info -->
+                        <template if:true={isLastStep}>
+                            <div class="submission-info">
+                                <p class="submission-text">
+                                    By submitting this form, your responses will be shared with the trip organizer to help plan the trip details.
+                                </p>
+                            </div>
+                        </template>
                     </template>
                 </div>
                 
-                <!-- Optimal Dates -->
-                <template if:true={analysisData.optimalStartDate}>
-                    <div class="slds-m-bottom_large">
-                        <h3 class="slds-text-heading_small slds-m-bottom_medium">Recommended Dates</h3>
-                        <div class="slds-box slds-theme_success">
-                            <p class="slds-text-body_regular">
-                                <strong>Optimal dates based on all responses:</strong> {formattedOptimalDates}
-                            </p>
-                            <p class="slds-text-body_small slds-text-color_weak slds-m-top_x-small">
-                                These dates accommodate all interested participants' availability.
-                            </p>
-                        </div>
-                    </div>
-                </template>
-                
-                <!-- Budget Analysis -->
-                <template if:true={budgetRecommendation}>
-                    <div class="slds-m-bottom_large">
-                        <h3 class="slds-text-heading_small slds-m-bottom_medium">Budget Analysis</h3>
-                        <div class="slds-grid slds-gutters">
-                            <div class="slds-col slds-size_1-of-3">
-                                <div class="budget-card">
-                                    <div class="budget-value">{budgetRecommendation.average}</div>
-                                    <div class="budget-label">Average Budget</div>
+                <!-- Navigation Buttons -->
+                <div class="button-container">
+                    <template if:false={isFirstStep}>
+                        <button class="nav-button secondary" onclick={handlePrevious} disabled={isFirstStep}>
+                            Previous
+                        </button>
+                    </template>
+                    <template if:true={isFirstStep}>
+                        <div></div> <!-- Spacer -->
+                    </template>
+                    
+                    <button class="nav-button primary" onclick={handleNext} disabled={isSubmitting}>
+                        <template if:false={isLastStep}>Next</template>
+                        <template if:true={isLastStep}>
+                            <template if:false={isSubmitting}>Submit</template>
+                            <template if:true={isSubmitting}>
+                                <div style="display: inline-flex; align-items: center;">
+                                    <div style="width: 16px; height: 16px; border: 2px solid white; border-radius: 50%; border-top-color: transparent; margin-right: 8px; animation: spin 1s linear infinite;"></div>
+                                    Submitting...
                                 </div>
-                            </div>
-                            <div class="slds-col slds-size_1-of-3">
-                                <div class="budget-card">
-                                    <div class="budget-value">{budgetRecommendation.median}</div>
-                                    <div class="budget-label">Median Budget</div>
-                                </div>
-                            </div>
-                            <div class="slds-col slds-size_1-of-3">
-                                <div class="budget-card">
-                                    <div class="budget-value">{budgetRecommendation.range}</div>
-                                    <div class="budget-label">Budget Range</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </template>
-                
-                <!-- Duration Preference -->
-                <template if:true={analysisData.recommendedDuration}>
-                    <div class="slds-m-bottom_large">
-                        <h3 class="slds-text-heading_small slds-m-bottom_medium">Trip Duration</h3>
-                        <div class="slds-box slds-theme_info">
-                            <p class="slds-text-body_regular">
-                                <strong>Most popular duration:</strong> {analysisData.recommendedDuration}
-                            </p>
-                        </div>
-                    </div>
-                </template>
-                
-                <!-- Participant Status -->
-                <div class="slds-m-bottom_large">
-                    <div class="slds-grid slds-gutters">
-                        <!-- Interested Participants -->
-                        <div class="slds-col slds-size_1-of-3">
-                            <h4 class="slds-text-heading_x-small slds-m-bottom_small">
-                                Interested ({interestedCompanions.length})
-                            </h4>
-                            <template if:true={interestedCompanions.length}>
-                                <ul class="participant-list">
-                                    <template for:each={interestedCompanions} for:item="companion">
-                                        <li key={companion.Id} class="participant-item participant-interested">
-                                            <lightning-icon icon-name="utility:success" size="xx-small" variant="success"></lightning-icon>
-                                            {companion.Name}
-                                        </li>
-                                    </template>
-                                </ul>
                             </template>
-                            <template if:false={interestedCompanions.length}>
-                                <p class="slds-text-color_weak">No interested participants yet</p>
-                            </template>
-                        </div>
-                        
-                        <!-- Declined Participants -->
-                        <div class="slds-col slds-size_1-of-3">
-                            <h4 class="slds-text-heading_x-small slds-m-bottom_small">
-                                Declined ({declinedCompanions.length})
-                            </h4>
-                            <template if:true={declinedCompanions.length}>
-                                <ul class="participant-list">
-                                    <template for:each={declinedCompanions} for:item="companion">
-                                        <li key={companion.Id} class="participant-item participant-declined">
-                                            <lightning-icon icon-name="utility:clear" size="xx-small" variant="error"></lightning-icon>
-                                            {companion.Name}
-                                        </li>
-                                    </template>
-                                </ul>
-                            </template>
-                            <template if:false={declinedCompanions.length}>
-                                <p class="slds-text-color_weak">No declined participants</p>
-                            </template>
-                        </div>
-                        
-                        <!-- Pending Participants -->
-                        <div class="slds-col slds-size_1-of-3">
-                            <h4 class="slds-text-heading_x-small slds-m-bottom_small">
-                                Pending Response ({pendingCompanions.length})
-                            </h4>
-                            <template if:true={pendingCompanions.length}>
-                                <ul class="participant-list">
-                                    <template for:each={pendingCompanions} for:item="companion">
-                                        <li key={companion.Id} class="participant-item participant-pending">
-                                            <lightning-icon icon-name="utility:clock" size="xx-small" variant="warning"></lightning-icon>
-                                            {companion.Name}
-                                        </li>
-                                    </template>
-                                </ul>
-                            </template>
-                            <template if:false={pendingCompanions.length}>
-                                <p class="slds-text-color_weak">All invitations responded</p>
-                            </template>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Action Buttons -->
-                <div class="slds-m-top_large">
-                    <div class="slds-button-group">
-                        <lightning-button 
-                            label="Refresh Analysis" 
-                            onclick={handleRefresh}
-                            variant="neutral">
-                        </lightning-button>
-                        <template if:true={canProceedWithPlanning}>
-                            <lightning-button 
-                                label="Finalize Trip Details" 
-                                variant="brand"
-                                disabled>
-                            </lightning-button>
                         </template>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Debug Panel (only visible during development) -->
+            <template if:true={isDebugMode}>
+                <div style="background-color: #f0f4f9; border: 1px solid #ddd; padding: 15px; margin-top: 20px; border-radius: 8px; font-family: monospace;">
+                    <h3 style="margin-top: 0;">Debug Information</h3>
+                    <div>
+                        <p><strong>Is Completed:</strong> {isCompleted}</p>
+                        <p><strong>Current Step:</strong> {currentStep}</p>
+                        <p><strong>Total Steps:</strong> {totalSteps}</p>
+                    </div>
+                    <div>
+                        <strong>All Responses:</strong>
+                        <pre style="background: #eee; padding: 8px; overflow: auto; max-height: 200px;">{responsesDebugText}</pre>
+                    </div>
+                    <div>
+                        <strong>Final Responses:</strong>
+                        <pre style="background: #eee; padding: 8px; overflow: auto; max-height: 200px;">{finalResponsesDebugText}</pre>
                     </div>
                 </div>
             </template>
-            
-            <!-- No Data State -->
-            <template if:false={hasAnalysisData}>
-                <template if:false={isLoading}>
-                    <div class="slds-align_absolute-center slds-p-around_large">
-                        <div class="slds-text-align_center">
-                            <lightning-icon icon-name="utility:info" size="large" variant="inverse"></lightning-icon>
-                            <h3 class="slds-text-heading_medium slds-m-top_medium">No Survey Responses Yet</h3>
-                            <p class="slds-text-body_regular slds-text-color_weak">
-                                Once participants start responding to your survey invitations, you'll see the analysis here.
-                            </p>
-                        </div>
-                    </div>
-                </template>
-            </template>
-        </div>
-    </lightning-card>
+        </template>
+    </div>
 </template>

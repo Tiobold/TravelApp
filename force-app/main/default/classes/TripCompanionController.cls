@@ -8,6 +8,7 @@ public with sharing class TripCompanionController {
         // Lists to store companions by status
         List<CompanionWrapper> confirmedCompanions = new List<CompanionWrapper>();
         List<CompanionWrapper> invitedCompanions = new List<CompanionWrapper>();
+        List<CompanionWrapper> interestedCompanions = new List<CompanionWrapper>();
         
         try {
             // Query for all trip companions (both confirmed and invited)
@@ -15,7 +16,7 @@ public with sharing class TripCompanionController {
                 SELECT Id, Name, Status__c, Contact__c, Contact__r.Name, Contact__r.Photo_URL__c
                 FROM Travel_Companion__c 
                 WHERE Trip__c = :tripId 
-                AND (Status__c = 'Confirmed' OR Status__c = 'Invited')
+                AND (Status__c = 'Confirmed' OR Status__c = 'Invited' OR Status__c = 'Interested')
             ];
             
             // Get unique contacts to count trips
@@ -55,17 +56,21 @@ public with sharing class TripCompanionController {
                     confirmedCompanions.add(wrapper);
                 } else if (companion.Status__c == 'Invited') {
                     invitedCompanions.add(wrapper);
+                } else if (companion.Status__c == 'Interested') {
+                    interestedCompanions.add(wrapper);
                 }
             }
             
             // Add lists to response map
             response.put('confirmed', confirmedCompanions);
             response.put('invited', invitedCompanions);
+            response.put('interested', interestedCompanions);
             
         } catch(Exception e) {
             // In case of error, return empty lists
             response.put('confirmed', new List<CompanionWrapper>());
             response.put('invited', new List<CompanionWrapper>());
+            response.put('interested', new List<CompanionWrapper>());
             response.put('error', e.getMessage());
         }
         

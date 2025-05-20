@@ -1,0 +1,165 @@
+<template>
+    <div class="slds-card analytics-container">
+        <!-- Header -->
+        <div class="slds-card__header slds-grid">
+            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                <div class="slds-media__figure">
+                    <lightning-icon icon-name="standard:survey" alternative-text="Trip Survey Analytics" size="medium"></lightning-icon>
+                </div>
+                <div class="slds-media__body">
+                    <h2 class="slds-card__header-title">
+                        <span class="slds-text-heading_medium">Trip Survey Analytics</span>
+                    </h2>
+                </div>
+                <div class="slds-no-flex">
+                    <lightning-button-icon icon-name="utility:refresh" 
+                                          alternative-text="Refresh"
+                                          onclick={handleRefresh}
+                                          disabled={isLoading}>
+                    </lightning-button-icon>
+                </div>
+            </header>
+        </div>
+        
+        <!-- Loading State -->
+        <template if:true={isLoading}>
+            <div class="slds-card__body slds-card__body_inner slds-is-relative">
+                <div class="slds-p-around_medium slds-align_absolute-center">
+                    <lightning-spinner alternative-text="Loading analysis data..." size="medium"></lightning-spinner>
+                </div>
+            </div>
+        </template>
+        
+        <!-- Error State -->
+        <template if:true={error}>
+            <div class="slds-card__body slds-card__body_inner">
+                <div class="slds-illustration slds-illustration_small">
+                    <div class="slds-text-longform">
+                        <h3 class="slds-text-heading_medium slds-text-color_error">Analysis Not Available</h3>
+                        <p class="slds-text-body_regular">{error}</p>
+                    </div>
+                </div>
+            </div>
+        </template>
+        
+        <!-- Analytics Content -->
+        <template if:false={isLoading}>
+            <template if:false={error}>
+                <div class="slds-card__body slds-card__body_inner">
+                    <!-- Response Metrics -->
+                    <lightning-layout multiple-rows>
+                        <template for:each={responseMetrics} for:item="metric">
+                            <lightning-layout-item key={metric.label} size="4" padding="around-small">
+                                <div class="metric-card slds-box slds-box_x-small slds-text-align_center">
+                                    <lightning-icon icon-name={metric.icon} size="small" alternative-text={metric.label}></lightning-icon>
+                                    <div class="slds-text-heading_large">{metric.value}</div>
+                                    <div class="slds-text-title">{metric.label}</div>
+                                </div>
+                            </lightning-layout-item>
+                        </template>
+                    </lightning-layout>
+                    
+                    <!-- Date Analysis -->
+                    <lightning-card title="Optimal Trip Dates" icon-name="utility:event">
+                        <div class="slds-p-horizontal_small">
+                            <template if:true={hasDates}>
+                                <lightning-layout vertical-align="center">
+                                    <lightning-layout-item size="8" padding="horizontal-small">
+                                        <div class="date-range slds-text-heading_small">{dateRange}</div>
+                                        <div class="slds-text-body_small slds-p-top_xx-small">
+                                            Duration: {tripDuration}
+                                        </div>
+                                    </lightning-layout-item>
+                                    <lightning-layout-item size="4" padding="horizontal-small">
+                                        <div class="slds-text-align_center">
+                                            <div class="slds-pill slds-pill_brand">
+                                                <span class="slds-pill__label">{recommendedDuration}</span>
+                                            </div>
+                                            <div class="slds-text-body_small slds-p-top_xx-small">
+                                                Recommended Duration
+                                            </div>
+                                        </div>
+                                    </lightning-layout-item>
+                                </lightning-layout>
+                                <div class="slds-p-top_small slds-text-body_small">
+                                    These dates accommodate the most participants based on their availability.
+                                </div>
+                            </template>
+                            <template if:false={hasDates}>
+                                <div class="slds-illustration slds-illustration_small">
+                                    <div class="slds-text-longform">
+                                        <p class="slds-text-body_regular">Not enough date preferences collected yet. Invite more people to respond to the survey.</p>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </lightning-card>
+                    
+                    <!-- Budget Analysis -->
+                    <lightning-card title="Budget Analysis" icon-name="utility:moneybag">
+                        <div class="slds-p-horizontal_small">
+                            <template if:true={hasBudgetData}>
+                                <lightning-layout multiple-rows>
+                                    <lightning-layout-item size="12" padding="vertical-small">
+                                        <div class="budget-range">
+                                            <div class="budget-range-label">Budget Range:</div>
+                                            <div class="budget-range-value">
+                                                <span class={getBudgetClass}>{minBudget}</span>
+                                                <span class="budget-range-separator">to</span>
+                                                <span class={getBudgetClass}>{maxBudget}</span>
+                                            </div>
+                                        </div>
+                                    </lightning-layout-item>
+                                    
+                                    <lightning-layout-item size="6" padding="vertical-small">
+                                        <div class="budget-metric">
+                                            <div class="budget-metric-value slds-text-heading_medium">
+                                                {averageBudget}
+                                            </div>
+                                            <div class="budget-metric-label">Average Budget</div>
+                                        </div>
+                                    </lightning-layout-item>
+                                    
+                                    <lightning-layout-item size="6" padding="vertical-small">
+                                        <div class="budget-metric">
+                                            <div class="budget-metric-value slds-text-heading_medium">
+                                                {medianBudget}
+                                            </div>
+                                            <div class="budget-metric-label">Median Budget</div>
+                                        </div>
+                                    </lightning-layout-item>
+                                    
+                                    <lightning-layout-item size="12" padding="vertical-small">
+                                        <div class="budget-recommendation">
+                                            <p class="slds-text-body_regular">
+                                                <strong>Recommendation:</strong> Consider setting a trip budget of {medianBudget} per person, which represents the median budget preference from all participants.
+                                            </p>
+                                        </div>
+                                    </lightning-layout-item>
+                                </lightning-layout>
+                            </template>
+                            <template if:false={hasBudgetData}>
+                                <div class="slds-illustration slds-illustration_small">
+                                    <div class="slds-text-longform">
+                                        <p class="slds-text-body_regular">Not enough budget information collected yet. Invite more people to respond to the survey.</p>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </lightning-card>
+                </div>
+            </template>
+        </template>
+        
+        <div class="slds-card__footer">
+            <lightning-button variant="brand-outline" 
+                             label="View Individual Responses" 
+                             onclick={toggleDetails}>
+            </lightning-button>
+            
+            <template if:true={showDetails}>
+                <!-- Individual responses would be shown here -->
+            </template>
+        </div>
+    </div>
+</template>

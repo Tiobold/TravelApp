@@ -1015,3 +1015,35 @@
     text-align: center;
     color: #706e6b;
 }
+
+.interested-card {
+    border-left: 3px solid #8a2be2; /* Different color for interested status */
+    background-color: #f9f0ff;
+}
+
+.interested-card:hover {
+    background-color: #f0e0ff;
+}
+
+.interested-badge {
+    background-color: #8a2be2;
+}
+
+.companion-status.interested::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #8a2be2;
+    margin-right: 4px;
+}
+
+/* Profile status for interested */
+.profile-status.interested {
+    color: #8a2be2;
+}
+
+.profile-status.interested .status-indicator {
+    background-color: #8a2be2;
+}
