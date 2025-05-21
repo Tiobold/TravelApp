@@ -423,17 +423,17 @@ public without sharing class TripPlannerController {
         try {
             // Validate parameters
             if (String.isBlank(token)) {
-                return new ResponseSubmissionResult(false, 'Missing survey token');
+                return new ResponseSubmissionResult(false, 'Missing survey token', null);
             }
             
             if (String.isBlank(responseData)) {
-                return new ResponseSubmissionResult(false, 'No response data provided');
+                return new ResponseSubmissionResult(false, 'No response data provided', null);
             }
             
             // Validate token first
             SurveyAccessResult accessResult = validateSurveyToken(token);
             if (!accessResult.success) {
-                return new ResponseSubmissionResult(false, accessResult.error);
+                return new ResponseSubmissionResult(false, accessResult.error, null);
             }
             
             try {
@@ -469,16 +469,32 @@ public without sharing class TripPlannerController {
                 
                 update companion;
                 
-                return new ResponseSubmissionResult(true, 'Thank you for your response! The trip organizer will review all responses and get back to you soon.');
+                // Create a trip details link with token
+                String tripDetailsLink = null;
+                
+                // Only generate the link if interested
+                if (wantsToParticipate) {
+                    // Get or create a token for trip map access
+                    String tripToken = TripAccessController.getOrCreateTripAccessToken(accessResult.surveyInfo.companionId);
+                    tripDetailsLink = 'https://orgfarm-e65813f2a4-dev-ed.develop.my.site.com/TripSurvey123/tripdetails?token=' + tripToken;
+                    
+                    // Send confirmation email
+                    sendTripSurveyConfirmationEmail(companion, accessResult.surveyInfo, tripDetailsLink);
+                }
+                
+                return new ResponseSubmissionResult(true, 
+                    'Thank you for your response! ' + 
+                    (wantsToParticipate ? 'The trip organizer will review your preferences and get back to you soon.' : 'We appreciate your feedback.'), 
+                    tripDetailsLink);
                 
             } catch (Exception e) {
                 System.debug('Error processing response: ' + e.getMessage());
-                return new ResponseSubmissionResult(false, 'Error processing response: ' + e.getMessage());
+                return new ResponseSubmissionResult(false, 'Error processing response: ' + e.getMessage(), null);
             }
             
         } catch (Exception e) {
             System.debug('Error in submitSurveyResponse: ' + e.getMessage() + '\n' + e.getStackTraceString());
-            return new ResponseSubmissionResult(false, 'Error submitting response');
+            return new ResponseSubmissionResult(false, 'Error submitting response', null);
         }
     }
     
@@ -649,11 +665,85 @@ public without sharing class TripPlannerController {
     public class ResponseSubmissionResult {
         @AuraEnabled public Boolean success {get; set;}
         @AuraEnabled public String message {get; set;}
+        @AuraEnabled public String tripDetailsLink {get; set;} // New field for trip details link
         
-        public ResponseSubmissionResult(Boolean success, String message) {
+        public ResponseSubmissionResult(Boolean success, String message, String tripDetailsLink) {
             this.success = success;
             this.message = message;
+            this.tripDetailsLink = tripDetailsLink;
         }
+    }
+
+    private static void sendTripSurveyConfirmationEmail(Travel_Companion__c companion, SurveyInfo surveyInfo, String tripDetailsLink) {
+        try {
+            // Get the companion's contact info
+            Contact contact = [SELECT Id, Name, Email FROM Contact WHERE Id = :companion.Contact__c LIMIT 1];
+            
+            if (contact.Email == null) {
+                System.debug('Cannot send email: No email address found for contact');
+                return;
+            }
+            
+            // Create email message
+            Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();
+            email.setTargetObjectId(contact.Id);
+            email.setSubject('Thank You for Your Trip Survey Response - ' + surveyInfo.tripName);
+            
+            // Build email content
+            String emailBody = buildSurveyConfirmationEmail(contact.Name, surveyInfo, tripDetailsLink);
+            
+            email.setHtmlBody(emailBody);
+            
+            // Send the email
+            Messaging.sendEmail(new List<Messaging.SingleEmailMessage>{ email });
+            
+        } catch (Exception e) {
+            System.debug('Error sending confirmation email: ' + e.getMessage());
+            // We don't want to fail the whole process if just the email fails
+        }
+    }
+
+    private static String buildSurveyConfirmationEmail(String contactName, SurveyInfo surveyInfo, String tripDetailsLink) {
+        String emailBody = '<!DOCTYPE html>';
+        emailBody += '<html><body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">';
+        emailBody += '<div style="max-width: 600px; margin: 0 auto; padding: 20px;">';
+        
+        // Header
+        emailBody += '<div style="background: linear-gradient(135deg, #1b96ff 0%, #9058ff 100%); color: white; padding: 30px; border-radius: 10px; text-align: center;">';
+        emailBody += '<h1 style="margin: 0; font-size: 28px;">✈️ Trip Survey Confirmation</h1>';
+        emailBody += '</div>';
+        
+        // Main content
+        emailBody += '<div style="background: white; padding: 30px; margin-top: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">';
+        emailBody += '<h2 style="color: #1b96ff;">Hello ' + contactName + '!</h2>';
+        emailBody += '<p style="font-size: 16px;">Thank you for your interest in the upcoming trip:</p>';
+        
+        emailBody += '<div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">';
+        emailBody += '<h3 style="color: #333; margin-top: 0;">🌍 ' + surveyInfo.tripName + '</h3>';
+        emailBody += '<p style="margin: 5px 0;"><strong>Dates:</strong> ' + 
+                    formatDate(surveyInfo.tentativeStartDate) + ' to ' + 
+                    formatDate(surveyInfo.tentativeEndDate) + '</p>';
+        emailBody += '</div>';
+        
+        emailBody += '<p style="font-size: 16px;">Your survey response has been recorded and the trip organizer will review your preferences.</p>';
+        
+        // CTA Button for Trip Details
+        emailBody += '<div style="text-align: center; margin: 30px 0;">';
+        emailBody += '<a href="' + tripDetailsLink + '" style="background: #1b96ff; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-size: 18px; font-weight: bold; display: inline-block;">View Trip Details</a>';
+        emailBody += '</div>';
+        
+        emailBody += '<p style="font-size: 14px; color: #666;">You can now access and view the trip details page to see the itinerary, other travelers, and trip information. You\'ll receive further updates as the trip planning progresses.</p>';
+        
+        emailBody += '</div>';
+        emailBody += '</div></body></html>';
+        
+        return emailBody;
+    }
+
+    // Helper to format date
+    private static String formatDate(Date d) {
+        if (d == null) return '';
+        return d.month() + '/' + d.day() + '/' + d.year();
     }
     
     public class TripAnalysisResult {
@@ -678,6 +768,113 @@ public without sharing class TripPlannerController {
             this.medianBudget = 0;
             this.minBudget = 0;
             this.maxBudget = 0;
+        }
     }
+    @AuraEnabled
+    public static String generateTripAccessLink(Id companionId) {
+        try {
+            // Get or create token
+            String token = TripAccessController.getOrCreateTripAccessToken(companionId);
+            
+            // Get companion information
+            Travel_Companion__c companion = [
+                SELECT Id, Name, Contact__c, Contact__r.Email, Trip__c, Trip__r.Name, Status__c 
+                FROM Travel_Companion__c 
+                WHERE Id = :companionId
+                LIMIT 1
+            ];
+            
+            // Check if email exists
+            if (companion.Contact__c == null || String.isBlank(companion.Contact__r.Email)) {
+                throw new AuraHandledException('No email address found for this traveler');
+            }
+            
+            // Create access link
+            String siteUrl = getTripMapSiteUrl();
+            String accessLink = siteUrl + '?token=' + token;
+            
+            // Send email with access link
+            sendTripAccessEmail(companion, accessLink);
+            
+            return accessLink;
+            
+        } catch (Exception e) {
+            throw new AuraHandledException('Error generating trip access link: ' + e.getMessage());
+        }
+    }
+
+    private static void sendTripAccessEmail(Travel_Companion__c companion, String accessLink) {
+        try {
+            // Create email
+            Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();
+            email.setTargetObjectId(companion.Contact__c);
+            email.setSubject('Access Your Trip: ' + companion.Trip__r.Name);
+            
+            String emailBody = buildTripAccessEmail(companion.Name, companion.Trip__r.Name, accessLink, companion.Status__c);
+            
+            email.setHtmlBody(emailBody);
+            Messaging.sendEmail(new List<Messaging.SingleEmailMessage>{ email });
+            
+        } catch (Exception e) {
+            throw new AuraHandledException('Error sending trip access email: ' + e.getMessage());
+        }
+    }
+
+    private static String buildTripAccessEmail(String contactName, String tripName, String accessLink, String status) {
+        String emailBody = '<!DOCTYPE html>';
+        emailBody += '<html><body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">';
+        emailBody += '<div style="max-width: 600px; margin: 0 auto; padding: 20px;">';
+        
+        // Header
+        emailBody += '<div style="background: linear-gradient(135deg, #1b96ff 0%, #9058ff 100%); color: white; padding: 30px; border-radius: 10px; text-align: center;">';
+        emailBody += '<h1 style="margin: 0; font-size: 28px;">✈️ Your Trip Access</h1>';
+        emailBody += '</div>';
+        
+        // Main content
+        emailBody += '<div style="background: white; padding: 30px; margin-top: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">';
+        emailBody += '<h2 style="color: #1b96ff;">Hello ' + contactName + '!</h2>';
+        
+        if (status == 'Confirmed') {
+            emailBody += '<p style="font-size: 16px;">You are confirmed for this trip! You can now access and contribute to the trip planning:</p>';
+        } else {
+            emailBody += '<p style="font-size: 16px;">Thanks for your interest in this trip! You can access the trip details here:</p>';
+        }
+        
+        emailBody += '<div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">';
+        emailBody += '<h3 style="color: #333; margin-top: 0;">🌍 ' + tripName + '</h3>';
+        emailBody += '</div>';
+        
+        // CTA Button
+        emailBody += '<div style="text-align: center; margin: 30px 0;">';
+        emailBody += '<a href="' + accessLink + '" style="background: #1b96ff; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-size: 18px; font-weight: bold; display: inline-block;">Access Trip Details</a>';
+        emailBody += '</div>';
+        
+        if (status == 'Confirmed') {
+            emailBody += '<p style="font-size: 14px; color: #666;">With your confirmed status, you can:</p>';
+            emailBody += '<ul style="color: #666;">';
+            emailBody += '<li>View the full trip itinerary</li>';
+            emailBody += '<li>Add new locations to the itinerary</li>';
+            emailBody += '<li>Check trip expenses</li>';
+            emailBody += '<li>Explore flight and hotel options</li>';
+            emailBody += '</ul>';
+        } else {
+            emailBody += '<p style="font-size: 14px; color: #666;">As an interested traveler, you can:</p>';
+            emailBody += '<ul style="color: #666;">';
+            emailBody += '<li>View the trip itinerary</li>';
+            emailBody += '<li>Explore potential destinations</li>';
+            emailBody += '<li>Contact the trip organizer to confirm your participation</li>';
+            emailBody += '</ul>';
+        }
+        
+        emailBody += '</div>';
+        emailBody += '</div></body></html>';
+        
+        return emailBody;
+    }
+
+    // Get the trip map site URL
+    private static String getTripMapSiteUrl() {
+        // Update with your actual site URL
+        return 'https://orgfarm-e65813f2a4-dev-ed.develop.my.site.com/TripMap';
     }
 }

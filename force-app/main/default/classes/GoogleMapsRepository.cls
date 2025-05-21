@@ -1,5 +1,5 @@
 // GoogleMapsRepository.cls
-public with sharing class GoogleMapsRepository {
+public without sharing class GoogleMapsRepository {
     
     @AuraEnabled(cacheable=true)
     public static String getGoogleMapsApiKey() {

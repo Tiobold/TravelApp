@@ -1,0 +1,283 @@
+/* General Container Styles */
+:host {
+    --primary-color: #1b96ff;
+    --secondary-color: #9058ff;
+    --success-color: #2e844a;
+    --warning-color: #e2a201;
+    --error-color: #c23934;
+    --text-color: #181818;
+    --background-color: #f7f9fb;
+    --card-background: #ffffff;
+    --border-radius: 8px;
+    --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading State */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    text-align: center;
+    padding: 2rem;
+}
+
+.loading-text {
+    margin-top: 16px;
+    color: #5e6061;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* Error State */
+.error-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+    padding: 2rem;
+}
+
+.error-card {
+    background: var(--card-background);
+    border-radius: var(--border-radius);
+    padding: 40px;
+    text-align: center;
+    box-shadow: var(--box-shadow);
+    max-width: 500px;
+    width: 100%;
+}
+
+.error-title {
+    color: var(--error-color);
+    font-size: 24px;
+    font-weight: 700;
+    margin: 16px 0 8px 0;
+}
+
+.error-message {
+    color: #5e6061;
+    font-size: 16px;
+    margin-bottom: 16px;
+}
+
+.error-help {
+    color: #80838b;
+    font-size: 14px;
+    font-style: italic;
+}
+
+/* Trip Header */
+.trip-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    margin-bottom: 1px;
+    box-shadow: var(--box-shadow);
+    position: relative;
+}
+
+.trip-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 1rem 0;
+}
+
+.trip-dates {
+    font-size: 16px;
+    margin-bottom: 1rem;
+    opacity: 0.9;
+}
+
+.date-separator {
+    margin: 0 0.5rem;
+}
+
+.traveler-status {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.status-label {
+    margin-right: 0.5rem;
+    font-weight: 500;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.status-badge.interested {
+    background-color: rgba(226, 162, 1, 0.2);
+    color: #e2a201;
+}
+
+.status-badge.confirmed {
+    background-color: rgba(46, 132, 74, 0.2);
+    color: #2e844a;
+}
+
+.access-mode {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+}
+
+.edit-mode-badge, .view-mode-badge {
+    display: flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.edit-mode-badge {
+    background-color: rgba(46, 132, 74, 0.2);
+    color: white;
+}
+
+.view-mode-badge {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.edit-icon, .view-icon {
+    margin-right: 0.25rem;
+}
+
+/* Trip Map Container */
+.trip-map-container {
+    background-color: var(--card-background);
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    box-shadow: var(--box-shadow);
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+/* Next Steps Section */
+.next-steps-container {
+    background-color: var(--card-background);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    box-shadow: var(--box-shadow);
+    margin-bottom: 2rem;
+}
+
+.next-steps-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #f2f2f2;
+}
+
+.next-steps-content {
+    font-size: 16px;
+    color: #5e6061;
+    line-height: 1.5;
+}
+
+.steps-list {
+    list-style: none;
+    padding-left: 0;
+    margin-top: 1rem;
+}
+
+.steps-list li {
+    position: relative;
+    padding-left: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.steps-list li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
+/* Design Mode */
+.design-container {
+    padding: 2rem;
+    border: 2px dashed var(--primary-color);
+    border-radius: var(--border-radius);
+    margin-bottom: 2rem;
+}
+
+.design-message {
+    text-align: center;
+    padding: 2rem;
+    background-color: var(--card-background);
+    border-radius: var(--border-radius);
+}
+
+.design-message h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 1rem 0;
+    color: var(--primary-color);
+}
+
+.design-message p {
+    font-size: 16px;
+    color: #5e6061;
+    margin-bottom: 0.5rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .trip-header {
+        padding: 1.5rem;
+    }
+    
+    .trip-title {
+        font-size: 24px;
+    }
+    
+    .access-mode {
+        position: static;
+        margin-top: 1rem;
+    }
+    
+    .next-steps-container {
+        padding: 1.5rem;
+    }
+}
+/* Two-column layout styling */
+.trip-content-layout {
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.trip-main-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.trip-sidebar {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Mobile responsiveness for two-column layout */
+@media (max-width: 1024px) {
+    .trip-content-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .trip-sidebar {
+        order: -1; /* Show sidebar before main content on mobile */
+        margin-bottom: 1.5rem;
+    }
+}

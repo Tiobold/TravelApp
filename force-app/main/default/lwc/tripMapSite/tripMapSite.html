@@ -1,0 +1,86 @@
+<template>
+    <!-- Loading State -->
+    <template if:true={isLoading}>
+        <div class="loading-container">
+            <lightning-spinner alternative-text="Loading trip details..." size="large"></lightning-spinner>
+            <p class="loading-text">Loading your trip information...</p>
+        </div>
+    </template>
+    
+    <!-- Error State -->
+    <template if:true={error}>
+        <div class="error-container">
+            <div class="error-card">
+                <lightning-icon icon-name="utility:error" alternative-text="Error" size="large" variant="error"></lightning-icon>
+                <h2 class="error-title">Trip Access Unavailable</h2>
+                <p class="error-message">{error}</p>
+                <p class="error-help">Please check your access link or contact the trip organizer.</p>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Trip Information -->
+    <template if:true={showTripDetails}>
+        <!-- Main Content Area with Two-Column Layout -->
+        <div class="trip-content-layout">
+            <div class="trip-main-content">
+                <!-- Embedded Trip Map -->
+                <div class="trip-map-container">
+                    <c-trip-map 
+                        record-id={accessInfo.tripId}
+                        readonly={isReadOnly}>
+                    </c-trip-map>
+                </div>
+                
+                <!-- Next Steps Guide -->
+                <div class="next-steps-container">
+                    <h2 class="next-steps-title">What's Next?</h2>
+                    <template if:true={isInterested}>
+                        <div class="next-steps-content">
+                            <p>Thank you for your interest in this trip! Here's what you can do:</p>
+                            <ul class="steps-list">
+                                <li>Explore the itinerary details above</li>
+                                <li>Contact the trip organizer to confirm your participation</li>
+                                <li>Once confirmed, you'll be able to contribute to the trip planning</li>
+                            </ul>
+                        </div>
+                    </template>
+                    <template if:true={isConfirmed}>
+                        <div class="next-steps-content">
+                            <p>You're confirmed for this trip! Here's what you can do:</p>
+                            <ul class="steps-list">
+                                <li>Add new locations to the itinerary using the "Add Item" button</li>
+                                <li>View expenses and budget information</li>
+                                <li>Check flights and hotel options</li>
+                                <li>Share this trip with other travelers by sending them this link</li>
+                            </ul>
+                        </div>
+                    </template>
+                </div>
+            </div>
+            
+            <div class="trip-sidebar">
+                <!-- Travel Companions Component -->
+                <c-trip-companions-site token={tripToken}></c-trip-companions-site>
+
+                 <!-- My Survey Response Component -->
+                <c-my-survey-response token={tripToken}></c-my-survey-response>
+                
+                <!-- Survey Analytics Component (visible only to confirmed travelers) -->
+                <c-trip-survey-analytics-site token={tripToken}></c-trip-survey-analytics-site>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Design Mode - when viewing in Experience Builder -->
+    <template if:true={isDesignMode}>
+        <div class="design-container">
+            <div class="design-message">
+                <lightning-icon icon-name="utility:info" alternative-text="Design Info" size="medium"></lightning-icon>
+                <h2>Trip Map Component</h2>
+                <p>This component displays a trip map for external users via a secure token link.</p>
+                <p>At runtime, users will need a valid token in the URL (example: ?token=abc123) to view trip details.</p>
+            </div>
+        </div>
+    </template>
+</template>

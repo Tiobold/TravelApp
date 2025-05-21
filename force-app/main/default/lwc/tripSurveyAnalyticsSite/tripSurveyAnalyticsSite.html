@@ -1,0 +1,114 @@
+<template>
+    <div class="analytics-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <lightning-icon icon-name="standard:survey" size="small" class="title-icon"></lightning-icon>
+                Trip Survey Analytics
+            </h2>
+        </div>
+        
+        <!-- Loading State -->
+        <template if:true={isLoading}>
+            <div class="loading-container">
+                <lightning-spinner alternative-text="Loading analytics..." size="small"></lightning-spinner>
+            </div>
+        </template>
+        
+        <!-- Error State -->
+        <template if:true={error}>
+            <div class="error-container">
+                <p class="error-message">{error}</p>
+            </div>
+        </template>
+        
+        <!-- Analytics Content -->
+        <template if:false={isLoading}>
+            <div class="card-content">
+                <!-- Response Metrics -->
+                <div class="metrics-container">
+                    <template for:each={responseMetrics} for:item="metric">
+                        <div key={metric.label} class="metric-card">
+                            <div class="metric-icon">
+                                <lightning-icon icon-name={metric.icon} size="small"></lightning-icon>
+                            </div>
+                            <div class="metric-value">{metric.value}</div>
+                            <div class="metric-label">{metric.label}</div>
+                        </div>
+                    </template>
+                </div>
+                
+                <!-- Date Analysis -->
+                <div class="analysis-section">
+                    <h3 class="section-title">
+                        <lightning-icon icon-name="utility:event" size="small" class="section-icon"></lightning-icon>
+                        Optimal Trip Dates
+                    </h3>
+                    <template if:true={hasDates}>
+                        <div class="date-container">
+                            <div class="date-range">
+                                <span class="date-value">{formattedStartDate}</span>
+                                <span class="date-separator">to</span>
+                                <span class="date-value">{formattedEndDate}</span>
+                            </div>
+                            <div class="date-duration">{tripDuration}</div>
+                            <div class="recommended-duration">
+                                <span class="duration-badge">{recommendedDuration}</span>
+                                <span class="duration-label">Recommended Duration</span>
+                            </div>
+                            <p class="date-info">
+                                These dates accommodate the most participants based on their availability.
+                            </p>
+                        </div>
+                    </template>
+                    <template if:false={hasDates}>
+                        <div class="empty-dates">
+                            <p>Not enough date preferences collected yet</p>
+                        </div>
+                    </template>
+                </div>
+                
+                <!-- Budget Analysis -->
+                <div class="analysis-section">
+                    <h3 class="section-title">
+                        <lightning-icon icon-name="utility:moneybag" size="small" class="section-icon"></lightning-icon>
+                        Budget Analysis
+                    </h3>
+                    <template if:true={hasBudgetData}>
+                        <div class="budget-container">
+                            <div class="budget-range">
+                                <div class="budget-label">Budget Range:</div>
+                                <div class="budget-values">
+                                    <span class="budget-min">{minBudget}</span>
+                                    <span class="budget-separator">to</span>
+                                    <span class="budget-max">{maxBudget}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="budget-averages">
+                                <div class="average-item">
+                                    <div class="average-value">{averageBudget}</div>
+                                    <div class="average-label">Average Budget</div>
+                                </div>
+                                <div class="average-item">
+                                    <div class="average-value">{medianBudget}</div>
+                                    <div class="average-label">Median Budget</div>
+                                </div>
+                            </div>
+                            
+                            <div class="budget-recommendation">
+                                <p>
+                                    <strong>Recommendation:</strong> Consider setting a trip budget of {medianBudget} per person, which represents the median budget preference from all participants.
+                                </p>
+                            </div>
+                        </div>
+                    </template>
+                    <template if:false={hasBudgetData}>
+                        <div class="empty-budget">
+                            <p>Not enough budget information collected yet</p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </div>
+</template>

@@ -1,0 +1,48 @@
+<template>
+    <div class="survey-response-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <lightning-icon icon-name="standard:survey" size="small" class="title-icon"></lightning-icon>
+                My Survey Response
+            </h2>
+        </div>
+        
+        <!-- Loading State -->
+        <template if:true={isLoading}>
+            <div class="loading-container">
+                <lightning-spinner alternative-text="Loading response..." size="small"></lightning-spinner>
+            </div>
+        </template>
+        
+        <!-- Error State -->
+        <template if:true={error}>
+            <div class="error-container">
+                <p class="error-message">{error}</p>
+            </div>
+        </template>
+        
+        <!-- Response Content -->
+        <template if:false={isLoading}>
+            <div class="card-content">
+                <template if:true={hasResponse}>
+                    <div class="response-list">
+                        <template for:each={formattedResponses} for:item="response">
+                            <div key={response.question} class="response-item">
+                                <div class="response-question">{response.question}</div>
+                                <div class="response-answer">{response.answer}</div>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="response-date">
+                        <p>Response submitted on {formattedResponseDate}</p>
+                    </div>
+                </template>
+                <template if:false={hasResponse}>
+                    <div class="empty-response">
+                        <p>No survey response found</p>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+</template>

@@ -1,0 +1,144 @@
+<template>
+    <!-- Card Container -->
+    <div class="companions-card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <lightning-icon icon-name="custom:custom107" size="small" class="title-icon"></lightning-icon>
+                Travel Companions
+            </h2>
+        </div>
+        
+        <!-- Loading State -->
+        <template if:true={isLoading}>
+            <div class="loading-container">
+                <lightning-spinner alternative-text="Loading companions..." size="small"></lightning-spinner>
+            </div>
+        </template>
+        
+        <!-- Error State -->
+        <template if:true={error}>
+            <div class="error-container">
+                <p class="error-message">{error}</p>
+            </div>
+        </template>
+        
+        <!-- Companions Content -->
+        <template if:false={isLoading}>
+            <div class="card-content">
+                <!-- Current User -->
+                <template if:true={hasCurrentUser}>
+                    <div class="section-header">
+                        <h3 class="section-title">You</h3>
+                    </div>
+                    <div class="companions-list">
+                        <div class="companion-card current-user-card">
+                            <div class="companion-avatar-container">
+                                <img src={currentUser.photoUrl} alt={currentUser.name} class="companion-avatar" />
+                                <template if:true={currentUser.isOwner}>
+                                    <div class="companion-badge owner-badge">Owner</div>
+                                </template>
+                                <template if:false={currentUser.isOwner}>
+                                    <div class="companion-badge you-badge">You</div>
+                                </template>
+                            </div>
+                            <div class="companion-details">
+                                <div class="companion-name">{currentUser.name}</div>
+                                <div class="companion-status">
+                                    <span class={currentUserStatusClass}>{currentUser.status}</span>
+                                </div>
+                                <template if:true={currentUser.tripCount}>
+                                    <div class="companion-trips">{currentUser.tripCount} previous trips</div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                
+                <!-- Confirmed Companions -->
+                <template if:true={hasConfirmedCompanions}>
+                    <div class="section-header">
+                        <h3 class="section-title">Confirmed ({confirmedCount})</h3>
+                    </div>
+                    <div class="companions-list">
+                        <template for:each={confirmedCompanions} for:item="companion">
+                            <div key={companion.id} class="companion-card confirmed-card">
+                                <div class="companion-avatar-container">
+                                    <img src={companion.photoUrl} alt={companion.name} class="companion-avatar" />
+                                    <template if:true={companion.isOwner}>
+                                        <div class="companion-badge owner-badge">Owner</div>
+                                    </template>
+                                    <template if:true={companion.tripCount}>
+                                        <div class="trip-count">{companion.tripCount}</div>
+                                    </template>
+                                </div>
+                                <div class="companion-details">
+                                    <div class="companion-name">{companion.name}</div>
+                                    <div class="companion-status">
+                                        <span class="status-label confirmed">Confirmed</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+                
+                <!-- Interested Companions -->
+                <template if:true={hasInterestedCompanions}>
+                    <div class="section-header">
+                        <h3 class="section-title">Interested ({interestedCount})</h3>
+                    </div>
+                    <div class="companions-list">
+                        <template for:each={interestedCompanions} for:item="companion">
+                            <div key={companion.id} class="companion-card interested-card">
+                                <div class="companion-avatar-container">
+                                    <img src={companion.photoUrl} alt={companion.name} class="companion-avatar" />
+                                    <template if:true={companion.tripCount}>
+                                        <div class="trip-count">{companion.tripCount}</div>
+                                    </template>
+                                </div>
+                                <div class="companion-details">
+                                    <div class="companion-name">{companion.name}</div>
+                                    <div class="companion-status">
+                                        <span class="status-label interested">Interested</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+                
+                <!-- Invited Companions -->
+                <template if:true={hasInvitedCompanions}>
+                    <div class="section-header">
+                        <h3 class="section-title">Awaiting Response ({invitedCount})</h3>
+                    </div>
+                    <div class="companions-list">
+                        <template for:each={invitedCompanions} for:item="companion">
+                            <div key={companion.id} class="companion-card invited-card">
+                                <div class="companion-avatar-container">
+                                    <img src={companion.photoUrl} alt={companion.name} class="companion-avatar" />
+                                    <template if:true={companion.tripCount}>
+                                        <div class="trip-count">{companion.tripCount}</div>
+                                    </template>
+                                </div>
+                                <div class="companion-details">
+                                    <div class="companion-name">{companion.name}</div>
+                                    <div class="companion-status">
+                                        <span class="status-label invited">Invited</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+                
+                <!-- No Companions Message -->
+                <template if:true={noCompanions}>
+                    <div class="empty-container">
+                        <p class="empty-message">No other travelers found for this trip</p>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+</template>

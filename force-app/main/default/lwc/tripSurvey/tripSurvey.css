@@ -462,3 +462,26 @@
         .completion-card {
             animation: fadeInScale 0.5s ease-out;
         }
+.trip-details-link-container {
+    background-color: #f0f7ff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    text-align: center;
+    border-left: 4px solid #1b96ff;
+}
+
+.trip-link-button {
+    margin: 1rem 0;
+}
+
+.trip-link-help {
+    font-size: 0.8rem;
+    color: #747474;
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+.trip-details-link {
+    text-decoration: none;
+}

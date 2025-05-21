@@ -45,7 +45,18 @@
                         </template>
                     </div>
                     
-                    <p class="completion-help">The trip organizer will be in touch with further details about the trip to {tripDestination}.</p>
+                    <!-- Trip Details Link - Only shown if user wants to participate and link is available -->
+                    <template if:true={tripDetailsLink}>
+                        <div class="trip-details-link-container">
+                            <p>You can now view the full trip details:</p>
+                            <a href={tripDetailsLink} class="trip-details-link">
+                                <lightning-button variant="brand" label="View Trip Details" icon-name="utility:travel_and_places" class="trip-link-button"></lightning-button>
+                            </a>
+                            <p class="trip-link-help">This link has also been sent to your email for future reference.</p>
+                        </div>
+                    </template>
+                    
+                    <p class="completion-help">The trip organizer will be in touch with further details about the trip.</p>
                     
                     <!-- Optional: Add a "Start Over" button -->
                     <div style="margin-top: 30px;">

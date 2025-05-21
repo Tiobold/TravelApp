@@ -338,6 +338,10 @@ export default class TripSurvey extends LightningElement {
                 this.isCompleted = true;
                 const message = result.message || 'Thank you for your response!';
                 this.showToast('Success', message, 'success');
+                
+                // Store the trip details link
+                this.tripDetailsLink = result.tripDetailsLink;
+                console.log('Trip details link:', this.tripDetailsLink);
             } else {
                 const errorMsg = (result && result.message) ? result.message : 'Failed to submit survey';
                 this.showToast('Error', errorMsg, 'error');
@@ -351,6 +355,7 @@ export default class TripSurvey extends LightningElement {
             this.isSubmitting = false;
         });
     }
+
     formatResponseForDisplay(questionType, value) {
         if (!value) return 'Not provided';
         
@@ -398,6 +403,19 @@ export default class TripSurvey extends LightningElement {
             // Generate a key from question text
             return questionText.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
         }
+    }
+
+    get wantsToParticipate() {
+        const participationQuestion = this.surveyQuestions.find(q => 
+            q.questionText && q.questionText.toLowerCase().includes('interested in participating')
+        );
+        
+        if (participationQuestion && this.finalResponses.has(participationQuestion.id)) {
+            const response = this.finalResponses.get(participationQuestion.id);
+            return response === 'Yes' || response === true || response === 'true';
+        }
+        
+        return false;
     }
     
     showToast(title, message, variant) {
