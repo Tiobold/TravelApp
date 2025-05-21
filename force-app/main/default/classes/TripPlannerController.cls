@@ -875,6 +875,6 @@ public without sharing class TripPlannerController {
     // Get the trip map site URL
     private static String getTripMapSiteUrl() {
         // Update with your actual site URL
-        return 'https://orgfarm-e65813f2a4-dev-ed.develop.my.site.com/TripMap';
+        return 'https://orgfarm-e65813f2a4-dev-ed.develop.my.site.com/TripSurvey123/tripdetails';
     }
 }
